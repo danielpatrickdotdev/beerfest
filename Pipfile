@@ -4,10 +4,6 @@ verify_ssl = true
 
 [packages]
 django = "*"
-gunicorn = "*"
-django-heroku = "*"
-django-registration-redux = "*"
-whitenoise = "*"
 
 [requires]
 python_version = "3.6"

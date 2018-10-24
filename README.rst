@@ -1,5 +1,5 @@
------------------------------------
-Vegan Robin Hood Beer Festival 2018
------------------------------------
+--------
+Beerfest
+--------
 
-A quick, terrible app for tracking which beers I want to drink this year.
+An app for storing data about a beer festival.
