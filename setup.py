@@ -12,9 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/remarkablerocket/beerfest",
-    packages=[
-        "beerfest",
-    ],
+    packages=setuptools.find_packages(),
     install_requires=[
         "django>=2.1",
     ],
