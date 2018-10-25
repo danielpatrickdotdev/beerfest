@@ -10,6 +10,12 @@ matrix:
       dist: xenial
       sudo: yes
       env: TOXENV=py37-django-21
+    - python: 3.6
+      env: TOXENV=coverage-combine
+    - python: 3.6
+      env: TOXENV=coverage
+    - python: 3.6
+      env: TOXENV=readme
 
 install:
   - pip install pipenv
