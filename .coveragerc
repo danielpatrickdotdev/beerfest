@@ -1,6 +1,9 @@
 [run]
 branch = true
 source = .
+omit =
+  manage.py
+  setup.py
 
 [report]
 omit =
