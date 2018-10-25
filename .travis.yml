@@ -14,5 +14,8 @@ matrix:
 install:
   - pip install pipenv
   - pipenv install --dev
+  - pipenv install coveralls
 script:
   - tox
+after_success:
+  - coveralls
