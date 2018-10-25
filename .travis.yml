@@ -11,17 +11,14 @@ matrix:
       sudo: yes
       env: TOXENV=py37-django-21
     - python: 3.6
-      env: TOXENV=coverage-combine
-    - python: 3.6
-      env: TOXENV=coverage
-    - python: 3.6
       env: TOXENV=readme
 
 install:
   - pip install pipenv
   - pipenv install --dev
-  - pipenv install coveralls
+  - pipenv install coverage coveralls
 script:
   - tox
 after_success:
+  - coverage combine
   - coveralls
