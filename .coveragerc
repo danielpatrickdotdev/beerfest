@@ -1,0 +1,10 @@
+[run]
+branch = true
+source = .
+
+[report]
+omit =
+    *site-packages*
+    *tests*
+    *.tox*
+show_missing = True
