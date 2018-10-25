@@ -13,4 +13,4 @@ install:
   - pip install pipenv
   - pipenv install --dev
 script:
-  - ./.travis/run tox
+  - tox
