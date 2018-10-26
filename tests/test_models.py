@@ -152,6 +152,10 @@ class TestUserBeer(TestCase):
         self.assertEqual(user_beer3.tried, False)
         self.assertEqual(user_beer3.rating, None)
 
+    def test_string_representation(self):
+        ub = models.UserBeer.objects.create(user=self.user, beer=self.beer1)
+        self.assertEqual(str(ub), "Mr Test and Test IPA")
+
     def test_beer_must_be_unique_with_user(self):
         models.UserBeer.objects.create(user=self.user, beer=self.beer1)
 
