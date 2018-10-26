@@ -27,6 +27,20 @@ class TestBrewery(TestCase):
                 name="Test Brew Co", location="Test City"
             )
 
+    def test_default_ordering(self):
+        for n in [3, 1, 5, 0]:
+            kwargs = self.brewery_kwargs.copy()
+            kwargs["name"] += f" {n}"
+            models.Brewery.objects.create(**kwargs)
+
+        brewery_names = models.Brewery.objects.values_list("name", flat=True)
+        self.assertEqual(list(brewery_names), [
+            "Test Brew Co 3",
+            "Test Brew Co 1",
+            "Test Brew Co 5",
+            "Test Brew Co 0",
+        ])
+
 
 class TestBar(TestCase):
     def test_create_and_retrieve_bar(self):
@@ -43,6 +57,18 @@ class TestBar(TestCase):
         models.Bar.objects.create(name="Test Bar")
         with self.assertRaises(IntegrityError):
             models.Bar.objects.create(name="Test Bar")
+
+    def test_default_ordering(self):
+        for n in [3, 1, 5, 0]:
+            models.Bar.objects.create(name=f"Test Bar {n}")
+
+        bar_names = models.Bar.objects.values_list("name", flat=True)
+        self.assertEqual(list(bar_names), [
+            "Test Bar 3",
+            "Test Bar 1",
+            "Test Bar 5",
+            "Test Bar 0",
+        ])
 
 
 class TestBeer(TestCase):
@@ -109,6 +135,20 @@ class TestBeer(TestCase):
         with self.assertRaises(IntegrityError):
             models.Beer.objects.create(**kwargs)
 
+    def test_default_ordering(self):
+        for n in [3, 1, 5, 0]:
+            models.Beer.objects.create(
+                bar=self.bar, brewery=self.brewery, name=f"Test IPA {n}"
+            )
+
+        beer_names = models.Beer.objects.values_list("name", flat=True)
+        self.assertEqual(list(beer_names), [
+            "Test IPA 3",
+            "Test IPA 1",
+            "Test IPA 5",
+            "Test IPA 0",
+        ])
+
 
 class TestUserBeer(TestCase):
     def setUp(self):
@@ -169,3 +209,21 @@ class TestUserBeer(TestCase):
 
         with self.assertRaises(IntegrityError):
             models.UserBeer.objects.create(**kwargs)
+
+    def test_default_ordering(self):
+        for n in [3, 1, 5, 0]:
+            beer = models.Beer.objects.create(
+                bar=self.bar, brewery=self.brewery, name=f"Test Beer {n}"
+            )
+            models.UserBeer.objects.create(user=self.user, beer=beer)
+
+        userbeer_strings = [
+            str(ub) for ub in models.UserBeer.objects.all()
+        ]
+
+        self.assertEqual(userbeer_strings, [
+            "Mr Test and Test Beer 3",
+            "Mr Test and Test Beer 1",
+            "Mr Test and Test Beer 5",
+            "Mr Test and Test Beer 0",
+        ])
