@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 class Brewery(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     location = models.CharField(max_length=200)
 
     def __str__(self):
@@ -14,7 +14,7 @@ class Brewery(models.Model):
 
 
 class Bar(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
 
     def __str__(self):
         return self.name
@@ -38,6 +38,7 @@ class Beer(models.Model):
 
     class Meta:
         ordering = ["id"]
+        unique_together = ["brewery", "name"]
 
 
 class UserBeer(models.Model):

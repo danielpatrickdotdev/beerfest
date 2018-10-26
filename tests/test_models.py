@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.test import TestCase
 from django.contrib.auth.models import User
 
@@ -19,6 +20,13 @@ class TestBrewery(TestCase):
         brewery = models.Brewery.objects.create(**self.brewery_kwargs)
         self.assertEqual(str(brewery), "Test Brew Co")
 
+    def test_brewery_name_must_be_unique(self):
+        models.Brewery.objects.create(**self.brewery_kwargs)
+        with self.assertRaises(IntegrityError):
+            models.Brewery.objects.create(
+                name="Test Brew Co", location="Test City"
+            )
+
 
 class TestBar(TestCase):
     def test_create_and_retrieve_bar(self):
@@ -30,6 +38,11 @@ class TestBar(TestCase):
     def test_string_representation(self):
         bar = models.Bar.objects.create(name="Test Bar")
         self.assertEqual(str(bar), "Test Bar")
+
+    def test_bar_name_must_be_unique(self):
+        models.Bar.objects.create(name="Test Bar")
+        with self.assertRaises(IntegrityError):
+            models.Bar.objects.create(name="Test Bar")
 
 
 class TestBeer(TestCase):
@@ -85,6 +98,17 @@ class TestBeer(TestCase):
         self.assertEqual(str(beer), "Test IPA by Test Brew Co")
         self.assertEqual(str(another_beer), "Test Mild by Test Brew Co")
 
+    def test_beer_name_must_be_unique_with_brewery(self):
+        models.Beer.objects.create(**self.beer_kwargs)
+
+        kwargs = self.beer_kwargs.copy()
+        kwargs["bar"] = models.Bar.objects.create(name="Test Bar 2")
+        kwargs["reserved"] = False
+        kwargs["abv"] = 55
+
+        with self.assertRaises(IntegrityError):
+            models.Beer.objects.create(**kwargs)
+
 
 class TestUserBeer(TestCase):
     def setUp(self):
@@ -127,3 +151,17 @@ class TestUserBeer(TestCase):
         self.assertEqual(user_beer3.starred, True)
         self.assertEqual(user_beer3.tried, False)
         self.assertEqual(user_beer3.rating, None)
+
+    def test_beer_must_be_unique_with_user(self):
+        models.UserBeer.objects.create(user=self.user, beer=self.beer1)
+
+        kwargs = {
+            "user": self.user,
+            "beer": self.beer1,
+            "starred": False,
+            "tried": True,
+            "rating": 4,
+        }
+
+        with self.assertRaises(IntegrityError):
+            models.UserBeer.objects.create(**kwargs)
