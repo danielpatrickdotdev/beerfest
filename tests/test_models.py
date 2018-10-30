@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from beerfest import models
+from tests import factories
 
 
 class TestBrewery(TestCase):
@@ -73,9 +74,8 @@ class TestBar(TestCase):
 
 class TestBeer(TestCase):
     def setUp(self):
-        self.brewery = models.Brewery.objects.create(
-            name="Test Brew Co", location="Testville")
-        self.bar = models.Bar.objects.create(name="Test Bar")
+        self.brewery = factories.create_brewery()
+        self.bar = factories.create_bar()
 
         self.beer_kwargs = {
             "bar": self.bar,
@@ -152,16 +152,15 @@ class TestBeer(TestCase):
 
 class TestUserBeer(TestCase):
     def setUp(self):
-        self.user = User.objects.create(username="Mr Test")
-        self.brewery = models.Brewery.objects.create(
-            name="Test Brew Co", location="Testville")
-        self.bar = models.Bar.objects.create(name="Test Bar")
-        self.beer1 = models.Beer.objects.create(
-            bar=self.bar, brewery=self.brewery, name="Test IPA")
-        self.beer2 = models.Beer.objects.create(
-            bar=self.bar, brewery=self.brewery, name="Test Mild")
-        self.beer3 = models.Beer.objects.create(
-            bar=self.bar, brewery=self.brewery, name="Test DIPA")
+        self.user = factories.create_user()
+        self.brewery = factories.create_brewery()
+        self.bar = factories.create_bar()
+        self.beer1 = factories.create_beer(name="Test IPA",
+                                           brewery=self.brewery, bar=self.bar)
+        self.beer2 = factories.create_beer(name="Test Mild",
+                                           brewery=self.brewery, bar=self.bar)
+        self.beer3 = factories.create_beer(name="Test DIPA",
+                                           brewery=self.brewery, bar=self.bar)
 
     def test_create_and_retrieve_userbeer(self):
         models.UserBeer.objects.create(user=self.user, beer=self.beer1)
@@ -194,7 +193,7 @@ class TestUserBeer(TestCase):
 
     def test_string_representation(self):
         ub = models.UserBeer.objects.create(user=self.user, beer=self.beer1)
-        self.assertEqual(str(ub), "Mr Test and Test IPA")
+        self.assertEqual(str(ub), "Mx Test and Test IPA")
 
     def test_beer_must_be_unique_with_user(self):
         models.UserBeer.objects.create(user=self.user, beer=self.beer1)
@@ -222,8 +221,8 @@ class TestUserBeer(TestCase):
         ]
 
         self.assertEqual(userbeer_strings, [
-            "Mr Test and Test Beer 3",
-            "Mr Test and Test Beer 1",
-            "Mr Test and Test Beer 5",
-            "Mr Test and Test Beer 0",
+            "Mx Test and Test Beer 3",
+            "Mx Test and Test Beer 1",
+            "Mx Test and Test Beer 5",
+            "Mx Test and Test Beer 0",
         ])
