@@ -45,7 +45,7 @@ def unstar_beer(request, id):
 
 
 def index(request):
-    return HttpResponseRedirect(reverse("beer_list"))
+    return HttpResponseRedirect(reverse("beer-list"))
 
 
 def beer_list(request):
