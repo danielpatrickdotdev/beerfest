@@ -2,12 +2,14 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from beerfest import views
+from tests import factories
 
 
 class BaseViewTest(TestCase):
     def setUp(self):
         self.login_url = "/accounts/login/"
         self.factory = RequestFactory()
+        self.user = factories.create_user()
 
 
 class TestIndexView(BaseViewTest):
