@@ -3,17 +3,12 @@ from django.test import TestCase
 from django.urls import resolve, reverse
 
 from beerfest import models, views
+from tests import factories
 
 
 class URLTestBase(TestCase):
     def setUp(self):
-        bar = models.Bar.objects.create(name="Test Bar")
-        brewery = models.Brewery.objects.create(
-            name="Test Brew Co", location="London")
-        beer = models.Beer.objects.create(
-            bar=bar, brewery=brewery, name="Test Pale Ale")
-        user = User.objects.create(username="Mx Test")
-        models.UserBeer.objects.create(user=user, beer=beer)
+        factories.create_user_beer()
 
 
 class TestIndexURL(URLTestBase):
