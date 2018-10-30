@@ -3,7 +3,7 @@ from django.urls import path
 import beerfest.views
 
 urlpatterns = [
-    path('', beerfest.views.index, name='index'),
+    path('', beerfest.views.IndexView.as_view(), name='index'),
     path('beers/', beerfest.views.beer_list, name='beer-list'),
     path('beers/<int:id>/', beerfest.views.beer_detail, name='beer-detail'),
     path('beers/<int:id>/star/',

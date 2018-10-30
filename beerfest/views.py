@@ -1,12 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, get_object_or_404
+from django.views.generic.base import RedirectView
 from django.urls import reverse
 
 from .models import Beer, UserBeer
+
+
+class IndexView(RedirectView):
+    pattern_name = "beer-list"
 
 
 @login_required
@@ -43,9 +48,6 @@ def unstar_beer(request, id):
     userbeer.save()
     return HttpResponse(status=204)
 
-
-def index(request):
-    return HttpResponseRedirect(reverse("beer-list"))
 
 
 def beer_list(request):

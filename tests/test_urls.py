@@ -18,7 +18,7 @@ class URLTestBase(TestCase):
 
 class TestIndexURL(URLTestBase):
     def test_index_route_uses_index_view(self):
-        self.assertEqual(resolve("/").func, views.index)
+        self.assertEqual(resolve("/").func.__name__, "IndexView")
 
     def test_index_route_reverse(self):
         self.assertEqual(reverse("index"), "/")

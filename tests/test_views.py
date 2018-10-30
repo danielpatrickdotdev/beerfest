@@ -13,6 +13,6 @@ class BaseViewTest(TestCase):
 class TestIndexView(BaseViewTest):
     def test_redirects_to_beer_list(self):
         request = self.factory.get("")
-        response = views.index(request)
+        response = views.IndexView.as_view()(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], reverse("beer-list"))
