@@ -34,7 +34,9 @@ class TestBeerListURL(URLTestBase):
 
 class TestBeerDetailURL(URLTestBase):
     def test_beer_detail_route_uses_beer_detail_view(self):
-        self.assertEqual(resolve("/beers/1/").func, views.beer_detail)
+        match = resolve("/beers/1/")
+        self.assertEqual(match.func, views.beer_detail)
+        self.assertEqual(match.kwargs, {"id": 1})
 
     def test_beer_detail_route_reverse(self):
         self.assertEqual(reverse("beer_detail", args=(1,)), "/beers/1/")
@@ -42,7 +44,9 @@ class TestBeerDetailURL(URLTestBase):
 
 class TestStarBeerURL(URLTestBase):
     def test_star_beer_route_uses_star_beer_view(self):
-        self.assertEqual(resolve("/beers/1/star/").func, views.star_beer)
+        match = resolve("/beers/1/star/")
+        self.assertEqual(match.func, views.star_beer)
+        self.assertEqual(match.kwargs, {"id": 1})
 
     def test_star_beer_route_reverse(self):
         self.assertEqual(reverse("star_beer", args=(1,)), "/beers/1/star/")
@@ -50,7 +54,9 @@ class TestStarBeerURL(URLTestBase):
 
 class TestUnstarBeerURL(URLTestBase):
     def test_unstar_beer_route_uses_unstar_beer_view(self):
-        self.assertEqual(resolve("/beers/1/unstar/").func, views.unstar_beer)
+        match = resolve("/beers/1/unstar/")
+        self.assertEqual(match.func, views.unstar_beer)
+        self.assertEqual(match.kwargs, {"id": 1})
 
     def test_unstar_beer_route_reverse(self):
         self.assertEqual(reverse("unstar_beer", args=(1,)), "/beers/1/unstar/")
