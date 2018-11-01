@@ -113,9 +113,14 @@ class TestUserProfileView(BaseViewTest):
 
     def test_renders_using_test_client(self):
         # Just a sanity check; almost an integration test
+        expected_beers = self.create_user_beers()
         self.client.force_login(self.user)
 
         response = self.client.get("/accounts/profile/")
+        user = response.context["user"]
+        beer_list = response.context["beer_list"]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "beerfest/user_profile.html")
+        self.assertEqual(user, self.user)
+        self.assertCountEqual(beer_list, expected_beers)
