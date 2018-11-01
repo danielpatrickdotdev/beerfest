@@ -3,10 +3,10 @@
 
 from django.urls import include, path
 
-from beerfest.views import user_profile
+from beerfest.views import UserProfileView
 
 
 urlpatterns = [
     path("", include("beerfest.urls")),
-    path("accounts/profile/", user_profile, name="user-profile"),
+    path("accounts/profile/", UserProfileView.as_view(), name="user-profile"),
 ]

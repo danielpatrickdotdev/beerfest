@@ -1,29 +1,42 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, get_object_or_404
-from django.views.generic.base import RedirectView
-from django.urls import reverse
+from django.views.generic import RedirectView, DetailView
 
 from .models import Beer, UserBeer
+
+
+User = get_user_model()
 
 
 class IndexView(RedirectView):
     pattern_name = "beer-list"
 
 
-@login_required
-def user_profile(request):
-    beer_list = Beer.objects.filter(
-        Q(userbeer__user=request.user, userbeer__starred=True) |
-        Q(userbeer__user=request.user, userbeer__tried=True) |
-        Q(userbeer__user=request.user, userbeer__rating__isnull=False)
-    ).distinct().select_related("bar", "brewery")
+class UserProfileView(LoginRequiredMixin, DetailView):
+    model = User
+    context_object_name = "user"
+    template_name = "beerfest/user_profile.html"
 
-    context = {"user": request.user, "beer_list": beer_list}
-    return render(request, "beerfest/user_profile.html", context)
+    def get_object(self):
+        return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        beer_list = Beer.objects.filter(
+            Q(userbeer__user=self.request.user, userbeer__starred=True) |
+            Q(userbeer__user=self.request.user, userbeer__tried=True) |
+            Q(userbeer__user=self.request.user, userbeer__rating__isnull=False)
+        ).distinct().select_related("bar", "brewery")
+        context_data["beer_list"] = beer_list
+
+        return context_data
 
 
 @login_required
