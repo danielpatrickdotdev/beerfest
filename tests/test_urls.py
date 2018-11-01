@@ -30,8 +30,8 @@ class TestBeerListURL(URLTestBase):
 class TestBeerDetailURL(URLTestBase):
     def test_beer_detail_route_uses_beer_detail_view(self):
         match = resolve("/beers/1/")
-        self.assertEqual(match.func, views.beer_detail)
-        self.assertEqual(match.kwargs, {"id": 1})
+        self.assertEqual(match.func.__name__, "BeerDetailView")
+        self.assertEqual(match.kwargs, {"pk": 1})
 
     def test_beer_detail_route_reverse(self):
         self.assertEqual(reverse("beer-detail", args=(1,)), "/beers/1/")

@@ -39,6 +39,10 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         return context_data
 
 
+class BeerDetailView(DetailView):
+    model = Beer
+
+
 @login_required
 def star_beer(request, id):
     beer = get_object_or_404(Beer, id=id)
@@ -79,9 +83,3 @@ def beer_list(request):
 
     context = {"beer_list": beer_list}
     return render(request, "beerfest/beer_list.html", context)
-
-
-def beer_detail(request, id):
-    beer = get_object_or_404(Beer, id=id)
-    context = {"beer": beer}
-    return render(request, "beerfest/beer_detail.html", context)

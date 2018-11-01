@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
+from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
@@ -124,3 +125,70 @@ class TestUserProfileView(BaseViewTest):
         self.assertTemplateUsed(response, "beerfest/user_profile.html")
         self.assertEqual(user, self.user)
         self.assertCountEqual(beer_list, expected_beers)
+
+
+class TestBeerDetailView(BaseViewTest):
+    view_class = views.BeerDetailView
+
+    def create_beers(self):
+        bar = factories.create_bar()
+        brewery = factories.create_brewery()
+        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
+        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
+
+        return (beer1, beer2)
+
+    def test_GETs_correct_beer_context_variable(self):
+        beer1, beer2 = self.create_beers()
+        request = self.factory.get("")
+        view = self.setup_view(request, pk=2)
+
+        response = view.get(request)
+
+        self.assertIn("beer", response.context_data)
+        self.assertEqual(response.context_data["beer"], beer2)
+
+    def test_get_object_returns_beer_for_given_pk(self):
+        beer1, beer2 = self.create_beers()
+        request = self.factory.get("")
+
+        view = self.setup_view(request, pk=1)
+        context_object1 = view.get_object()
+
+        view = self.setup_view(request, pk=2)
+        context_object2 = view.get_object()
+
+        self.assertEqual(context_object1, beer1)
+        self.assertEqual(context_object2, beer2)
+
+    def test_get_object_and_get_with_invalid_id_raises_404(self):
+        request = self.factory.get("")
+        view = self.setup_view(request, pk=1)
+
+        with self.assertRaises(Http404):
+            view.get_object()
+
+        with self.assertRaises(Http404):
+            view.get(request)
+
+    def test_get_template_names(self):
+        request = self.factory.get("")
+        view = self.setup_view(request)
+        view.object = None
+
+        template_names = view.get_template_names()
+
+        self.assertEqual(template_names[0], "beerfest/beer_detail.html")
+
+    def test_renders_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        beer1, beer2 = self.create_beers()
+
+        response = self.client.get("/beers/1/")
+        context_beer1 = response.context["beer"]
+        context_beer2 = self.client.get("/beers/2/").context["beer"]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "beerfest/beer_detail.html")
+        self.assertEqual(context_beer1, beer1)
+        self.assertEqual(context_beer2, beer2)
