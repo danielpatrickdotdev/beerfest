@@ -12,6 +12,13 @@ class BaseViewTest(TestCase):
         self.factory = RequestFactory()
         self.user = factories.create_user()
 
+    def setup_view(self, request, *args, **kwargs):
+        view = self.view_class()
+        view.request = request
+        view.args = args
+        view.kwargs = kwargs
+        return view
+
 
 class TestIndexView(BaseViewTest):
     def test_redirects_to_beer_list(self):
@@ -23,13 +30,6 @@ class TestIndexView(BaseViewTest):
 
 class TestUserProfileView(BaseViewTest):
     view_class = views.UserProfileView
-
-    def setup_view(self, request, *args, **kwargs):
-        view = self.view_class()
-        view.request = request
-        view.args = args
-        view.kwargs = kwargs
-        return view
 
     def create_user_beers(self):
         bar = factories.create_bar()
