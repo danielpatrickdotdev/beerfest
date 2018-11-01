@@ -23,6 +23,10 @@ class TestIndexView(BaseViewTest):
 
 class TestUserProfileView(BaseViewTest):
     def test_context_variables_and_template_used(self):
+        """This test uses the test client, which isn't necessarily the best way
+        to unit test - should ideally also test the view in other ways which
+        test the view function/class directly.
+        """
         bar = factories.create_bar()
         brewery = factories.create_brewery()
         beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Star IPA")
