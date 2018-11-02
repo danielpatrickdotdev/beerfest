@@ -59,5 +59,5 @@ def create_user_beer(user=None, beer=None,
     if beer is None:
         beer = create_beer()
 
-    return models.UserBeer.objects.create(user=user, beer=beer, starred=True,
-                                          tried=False, rating=None)
+    return models.UserBeer.objects.create(user=user, beer=beer, starred=starred,
+                                          tried=tried, rating=rating)
