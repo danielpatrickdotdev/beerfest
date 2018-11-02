@@ -4,7 +4,7 @@ import beerfest.views
 
 urlpatterns = [
     path('', beerfest.views.IndexView.as_view(), name='index'),
-    path('beers/', beerfest.views.beer_list, name='beer-list'),
+    path('beers/', beerfest.views.BeerListView.as_view(), name='beer-list'),
     path('beers/<int:pk>/',
          beerfest.views.BeerDetailView.as_view(), name='beer-detail'),
     path('beers/<int:id>/star/',

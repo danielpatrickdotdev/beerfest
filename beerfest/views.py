@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import RedirectView, DetailView
+from django.views.generic import RedirectView, DetailView, ListView
 
 from .models import Beer, UserBeer
 
@@ -39,6 +39,25 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         return context_data
 
 
+class BeerListView(ListView):
+    model = Beer
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related(
+            "bar", "brewery"
+        )
+        if hasattr(self.request, "user") and self.request.user.is_authenticated:
+            starred = UserBeer.objects.filter(
+                user_id=self.request.user.id,
+                beer_id=OuterRef("id")
+            )[:1].values("starred")
+
+            qs = qs.annotate(
+                starred=Coalesce(Subquery(starred), False)
+            )
+        return qs
+
+
 class BeerDetailView(DetailView):
     model = Beer
 
@@ -64,22 +83,3 @@ def unstar_beer(request, id):
     userbeer.starred = False
     userbeer.save()
     return HttpResponse(status=204)
-
-
-
-def beer_list(request):
-    beer_list = Beer.objects.distinct().select_related(
-        "bar", "brewery"
-    )
-    if request.user.is_authenticated:
-        starred = UserBeer.objects.filter(
-            user_id=request.user.id,
-            beer_id=OuterRef("id")
-        )[:1].values("starred")
-
-        beer_list = beer_list.annotate(
-            starred=Coalesce(Subquery(starred), False)
-        )
-
-    context = {"beer_list": beer_list}
-    return render(request, "beerfest/beer_list.html", context)

@@ -127,6 +127,116 @@ class TestUserProfileView(BaseViewTest):
         self.assertCountEqual(beer_list, expected_beers)
 
 
+class TestBeerListView(BaseViewTest):
+    view_class = views.BeerListView
+
+    def create_beers(self):
+        bar = factories.create_bar()
+        brewery = factories.create_brewery()
+        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
+        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
+        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Pale Ale")
+
+        return (beer1, beer2, beer3)
+
+    def test_GETs_beer_list_context_variable(self):
+        beers = self.create_beers()
+        request = self.factory.get("")
+        view = self.setup_view(request)
+
+        response = view.get(request)
+
+        self.assertIn("beer_list", response.context_data)
+        self.assertCountEqual(response.context_data["beer_list"], beers)
+
+    def test_get_queryset_returns_beer_list(self):
+        beers = self.create_beers()
+        request = self.factory.get("")
+
+        view = self.setup_view(request)
+        qs = view.get_queryset()
+
+        self.assertCountEqual(qs, beers)
+
+    def test_get_template_names(self):
+        request = self.factory.get("")
+        view = self.setup_view(request)
+        # The following line is needed for get_template_names() to work as it
+        # should (view.get assigns view.object_list before get_templates names
+        # is called by view.render_to_response)
+        view.object_list = view.get_queryset()
+
+        template_names = view.get_template_names()
+
+        self.assertEqual(template_names[0], "beerfest/beer_list.html")
+
+    def test_renders_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        beers = self.create_beers()
+
+        response = self.client.get("/beers/")
+        beer_list = response.context["beer_list"]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "beerfest/beer_list.html")
+        self.assertCountEqual(beer_list, beers)
+
+    def test_get_queryset_annotates_starred_status_if_user_logged_in(self):
+        beer1, beer2, beer3 = self.create_beers()
+        factories.create_user_beer(user=self.user, beer=beer1, starred=True)
+        factories.create_user_beer(user=self.user, beer=beer2, starred=False)
+
+        request = self.factory.get("")
+        request.user = self.user
+        view = self.setup_view(request)
+        qs = view.get_queryset()
+
+        self.assertEqual(qs[0].starred, True)
+        self.assertEqual(qs[1].starred, False)
+        self.assertEqual(qs[2].starred, False)
+
+    def test_GETs_annotated_beer_list_context_variable(self):
+        beer1, beer2, beer3 = self.create_beers()
+        factories.create_user_beer(user=self.user, beer=beer1, starred=True)
+        factories.create_user_beer(user=self.user, beer=beer2, starred=False)
+        user2 = factories.create_user("Ms Test")
+        factories.create_user_beer(user=user2, beer=beer1, starred=False)
+
+        request = self.factory.get("")
+        request.user = self.user
+        view = self.setup_view(request)
+        response = view.get(request)
+        beer_list = response.context_data["beer_list"]
+
+        self.assertEqual(beer_list[0].starred, True)
+        self.assertEqual(beer_list[1].starred, False)
+        self.assertEqual(beer_list[2].starred, False)
+
+    def test_beer_annotations_do_not_cause_duplicates(self):
+        # Some types of DB queries result in duplicates - eg repeating a beer
+        # for each value of starred. Test that we haven't formed such a query.
+        beer1, beer2, beer3 = self.create_beers()
+        factories.create_user_beer(user=self.user, beer=beer1, starred=True)
+        factories.create_user_beer(user=self.user, beer=beer2, starred=False)
+
+        user2 = factories.create_user("A Test")
+        factories.create_user_beer(user=user2, beer=beer1, starred=False)
+        factories.create_user_beer(user=user2, beer=beer3, starred=True)
+
+        request = self.factory.get("")
+        request.user = self.user
+        view = self.setup_view(request)
+        qs = view.get_queryset()
+
+        self.assertEqual(len(qs), 3)
+
+        request.user = user2
+        view = self.setup_view(request)
+        qs = view.get_queryset()
+
+        self.assertEqual(len(qs), 3)
+
+
 class TestBeerDetailView(BaseViewTest):
     view_class = views.BeerDetailView
 

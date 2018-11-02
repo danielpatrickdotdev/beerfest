@@ -21,7 +21,7 @@ class TestIndexURL(URLTestBase):
 
 class TestBeerListURL(URLTestBase):
     def test_beer_list_route_uses_beer_list_view(self):
-        self.assertEqual(resolve("/beers/").func, views.beer_list)
+        self.assertEqual(resolve("/beers/").func.__name__, "BeerListView")
 
     def test_beer_list_route_reverse(self):
         self.assertEqual(reverse("beer-list"), "/beers/")
