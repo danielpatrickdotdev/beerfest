@@ -35,8 +35,8 @@ class TestUserProfileView(BaseViewTest):
     def create_user_beers(self):
         bar = factories.create_bar()
         brewery = factories.create_brewery()
-        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Star IPA")
-        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Try PA")
+        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Star PA")
+        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Try IPA")
         beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Best")
         factories.create_beer(bar=bar, brewery=brewery, name="Unpopular Swill")
 
@@ -83,7 +83,6 @@ class TestUserProfileView(BaseViewTest):
         self.assertEqual(response.context_data["user"], self.user)
 
     def test_get_object_returns_logged_in_user(self):
-        expected_beers = self.create_user_beers()
         request = self.factory.get("")
         request.user = self.user
         view = self.setup_view(request)
@@ -135,7 +134,7 @@ class TestBeerListView(BaseViewTest):
         brewery = factories.create_brewery()
         beer1 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
         beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
-        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Pale Ale")
+        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Stout")
 
         return (beer1, beer2, beer3)
 

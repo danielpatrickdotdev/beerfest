@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.views.generic import RedirectView, DetailView, ListView
 
 from .models import Beer, UserBeer
@@ -43,12 +43,13 @@ class BeerListView(ListView):
     model = Beer
 
     def get_queryset(self):
+        user = getattr(self.request, "user", None)
         qs = super().get_queryset().select_related(
             "bar", "brewery"
         )
-        if hasattr(self.request, "user") and self.request.user.is_authenticated:
+        if user is not None and user.is_authenticated:
             starred = UserBeer.objects.filter(
-                user_id=self.request.user.id,
+                user_id=user.id,
                 beer_id=OuterRef("id")
             )[:1].values("starred")
 

@@ -1,8 +1,7 @@
-from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import resolve, reverse
 
-from beerfest import models, views
+from beerfest import views
 from tests import factories
 
 
