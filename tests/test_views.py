@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from beerfest import views
+from beerfest.models import UserBeer
 from tests import factories
 
 
@@ -301,3 +303,79 @@ class TestBeerDetailView(BaseViewTest):
         self.assertTemplateUsed(response, "beerfest/beer_detail.html")
         self.assertEqual(context_beer1, beer1)
         self.assertEqual(context_beer2, beer2)
+
+
+class TestStarBeerView(BaseViewTest):
+    view_class = views.StarBeerView
+
+    def setUp(self):
+        super().setUp()
+        bar = factories.create_bar()
+        brewery = factories.create_brewery()
+
+        self.beer1 = factories.create_beer(
+            bar=bar, brewery=brewery, name="IPA")
+        self.beer2 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Mild")
+        self.beer3 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Stout")
+
+        factories.create_user_beer(user=self.user, beer=self.beer1,
+                                   starred=True, tried=True, rating=5)
+        factories.create_user_beer(user=self.user, beer=self.beer2,
+                                   starred=False, tried=True, rating=2)
+
+    def test_star_beer(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=3)
+
+        view.post(request)
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer3)
+
+        self.assertTrue(user_beer.starred)
+
+    def test_star_beer_anonymous_forbidden(self):
+        request = self.factory.post("")
+        request.user = AnonymousUser()
+        view = self.setup_view(request, pk=2)
+
+        with self.assertRaises(PermissionDenied):
+            # Use view.dispatch as this is where logged in status is checked
+            view.dispatch(request)
+
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer2)
+
+        self.assertFalse(user_beer.starred)
+
+    def test_star_beer_returns_204(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=3)
+
+        response = view.post(request)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_star_beer_already_starred_has_no_effect(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=1)
+
+        response = view.post(request)
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer1)
+
+        self.assertTrue(user_beer.starred)
+        self.assertTrue(user_beer.tried)
+        self.assertEqual(user_beer.rating, 5)
+        self.assertEqual(response.status_code, 204)
+
+    def test_star_beer_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        self.client.force_login(self.user)
+
+        response = self.client.post("/beers/3/star/")
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer3)
+
+        self.assertTrue(user_beer.starred)
+        self.assertEqual(response.status_code, 204)

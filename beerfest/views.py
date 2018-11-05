@@ -6,7 +6,8 @@ from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
-from django.views.generic import RedirectView, DetailView, ListView
+from django.views.generic import RedirectView, DetailView, ListView, View
+from django.views.generic.detail import SingleObjectMixin
 
 from .models import Beer, UserBeer
 
@@ -63,18 +64,20 @@ class BeerDetailView(DetailView):
     model = Beer
 
 
-@login_required
-def star_beer(request, id):
-    beer = get_object_or_404(Beer, id=id)
-    try:
-        userbeer = UserBeer.objects.get(user=request.user, beer=beer)
-    except UserBeer.DoesNotExist:
-        userbeer = UserBeer(user=request.user, beer=beer)
-    else:
-        userbeer.starred = True
-    userbeer.save()
+class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = UserBeer
+    http_method_names = ['post']
+    raise_exception = True  # raise 403 for unauthenticated users
 
-    return HttpResponse(status=204)
+    def get_object(self):
+        return super().get_object(queryset=Beer.objects.all())
+
+    def post(self, request, *args, **kwargs):
+        beer = self.get_object()
+        self.object = self.model.objects.get_or_create(
+            user=self.request.user, beer=beer
+        )
+        return HttpResponse(status=204)
 
 
 @login_required
