@@ -80,10 +80,17 @@ class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
         return HttpResponse(status=204)
 
 
-@login_required
-def unstar_beer(request, id):
-    beer = get_object_or_404(Beer, id=id)
-    userbeer = get_object_or_404(UserBeer, user=request.user, beer=beer)
-    userbeer.starred = False
-    userbeer.save()
-    return HttpResponse(status=204)
+class UnstarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = UserBeer
+    http_method_names = ['post']
+    raise_exception = True  # raise 403 for unauthenticated users
+
+    def get_object(self):
+        return super().get_object(queryset=Beer.objects.all())
+
+    def post(self, request, *args, **kwargs):
+        beer = self.get_object()
+        self.object = self.model.objects.update_or_create(
+            user=self.request.user, beer=beer, defaults={"starred": False}
+        )
+        return HttpResponse(status=204)

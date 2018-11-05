@@ -9,6 +9,6 @@ urlpatterns = [
          beerfest.views.BeerDetailView.as_view(), name='beer-detail'),
     path('beers/<int:pk>/star/',
          beerfest.views.StarBeerView.as_view(), name='beer-star'),
-    path('beers/<int:id>/unstar/',
-         beerfest.views.unstar_beer, name='beer-unstar'),
+    path('beers/<int:pk>/unstar/',
+         beerfest.views.UnstarBeerView.as_view(), name='beer-unstar'),
 ]

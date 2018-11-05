@@ -379,3 +379,92 @@ class TestStarBeerView(BaseViewTest):
 
         self.assertTrue(user_beer.starred)
         self.assertEqual(response.status_code, 204)
+
+
+class TestUnstarBeerView(BaseViewTest):
+    view_class = views.UnstarBeerView
+
+    def setUp(self):
+        super().setUp()
+        bar = factories.create_bar()
+        brewery = factories.create_brewery()
+
+        self.beer1 = factories.create_beer(
+            bar=bar, brewery=brewery, name="IPA")
+        self.beer2 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Mild")
+        self.beer3 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Stout")
+
+        factories.create_user_beer(user=self.user, beer=self.beer1,
+                                   starred=True, tried=True, rating=5)
+        factories.create_user_beer(user=self.user, beer=self.beer2,
+                                   starred=False, tried=True, rating=2)
+
+    def test_unstar_beer(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=1)
+
+        view.post(request)
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer1)
+
+        self.assertFalse(user_beer.starred)
+
+    def test_unstar_beer_anonymous_forbidden(self):
+        request = self.factory.post("")
+        request.user = AnonymousUser()
+        view = self.setup_view(request, pk=1)
+
+        with self.assertRaises(PermissionDenied):
+            # Use view.dispatch as this is where logged in status is checked
+            view.dispatch(request)
+
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer1)
+
+        self.assertTrue(user_beer.starred)
+
+    def test_unstar_beer_returns_204(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=3)
+
+        response = view.post(request)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_unstar_beer_already_unstarred_has_no_effect(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=2)
+
+        response = view.post(request)
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer2)
+
+        self.assertFalse(user_beer.starred)
+        self.assertTrue(user_beer.tried)
+        self.assertEqual(user_beer.rating, 2)
+        self.assertEqual(response.status_code, 204)
+
+    def test_unstar_beer_never_starred_creates_unstarred_userbeer_object(self):
+        request = self.factory.post("")
+        request.user = self.user
+        view = self.setup_view(request, pk=3)
+
+        response = view.post(request)
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer3)
+
+        self.assertFalse(user_beer.starred)
+        self.assertFalse(user_beer.tried)
+        self.assertEqual(user_beer.rating, None)
+        self.assertEqual(response.status_code, 204)
+
+    def test_unstar_beer_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        self.client.force_login(self.user)
+
+        response = self.client.post("/beers/1/unstar/")
+        user_beer = UserBeer.objects.get(user=self.user, beer=self.beer1)
+
+        self.assertFalse(user_beer.starred)
+        self.assertEqual(response.status_code, 204)
