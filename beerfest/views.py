@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
@@ -64,33 +65,31 @@ class BeerDetailView(DetailView):
     model = Beer
 
 
-class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
+class StarBeerBaseView(LoginRequiredMixin, SingleObjectMixin, View):
     model = UserBeer
     http_method_names = ['post']
     raise_exception = True  # raise 403 for unauthenticated users
+    star_beer = None
 
     def get_object(self):
         return super().get_object(queryset=Beer.objects.all())
 
     def post(self, request, *args, **kwargs):
-        beer = self.get_object()
-        self.object = self.model.objects.get_or_create(
-            user=self.request.user, beer=beer
-        )
-        return HttpResponse(status=204)
-
-
-class UnstarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
-    model = UserBeer
-    http_method_names = ['post']
-    raise_exception = True  # raise 403 for unauthenticated users
-
-    def get_object(self):
-        return super().get_object(queryset=Beer.objects.all())
-
-    def post(self, request, *args, **kwargs):
+        if self.star_beer is None:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} is missing a star_beer attribute"
+            )
         beer = self.get_object()
         self.object = self.model.objects.update_or_create(
-            user=self.request.user, beer=beer, defaults={"starred": False}
+            user=self.request.user, beer=beer,
+            defaults={"starred": self.star_beer}
         )
         return HttpResponse(status=204)
+
+
+class StarBeerView(StarBeerBaseView):
+    star_beer = True
+
+
+class UnstarBeerView(StarBeerBaseView):
+    star_beer = False
