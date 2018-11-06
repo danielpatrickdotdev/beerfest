@@ -27,7 +27,7 @@ def abv(value):
 def user_starred_beer(user_id, beer_id):
     return UserBeer.objects.filter(
         user__id=user_id, beer__id=beer_id, starred=True
-    )
+    ).exists()
 
 
 @register.inclusion_tag("beerfest/beer_list_table.html")
