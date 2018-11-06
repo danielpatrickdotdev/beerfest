@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
@@ -468,3 +468,21 @@ class TestUnstarBeerView(BaseViewTest):
 
         self.assertFalse(user_beer.starred)
         self.assertEqual(response.status_code, 204)
+
+
+class TestStarBeerBaseView(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_missing_star_beer_attribute_results_in_error(self):
+        class ConcreteView(views.StarBeerBaseView):
+            pass
+
+        request = self.factory.post("")
+        view = ConcreteView()
+        view.request = request
+        expected_msg = "ConcreteView is missing a star_beer attribute"
+
+        with self.assertRaisesMessage(ImproperlyConfigured, expected_msg):
+            view.post(request)
