@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.urls import resolve, reverse
 
-from beerfest import views
 from tests import factories
 
 
