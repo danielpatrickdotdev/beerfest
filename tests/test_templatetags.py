@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.template import Context, Template
@@ -80,9 +82,11 @@ class ABVFilterTest(TestCase):
 
     def test_renders_abv_correctly(self):
         pairs = [
-            (10, "1.0%"),
-            (100, "10.0%"),
-            (99999, "9999.9%"),
+            (Decimal("0"), "0.0%"),
+            (Decimal("0.1"), "0.1%"),
+            (Decimal("1.0"), "1.0%"),
+            (Decimal("10.0"), "10.0%"),
+            (Decimal("99.9"), "99.9%"),
         ]
 
         for value, expected in pairs:
@@ -97,9 +101,11 @@ class ABVFilterTest(TestCase):
         self.assertEqual(beer_tags.abv(None), "TBC")
 
     def test_returns_formatted_ABV(self):
-        self.assertEqual(beer_tags.abv(10), "1.0%")
-        self.assertEqual(beer_tags.abv(100), "10.0%")
-        self.assertEqual(beer_tags.abv(99999), "9999.9%")
+        self.assertEqual(beer_tags.abv(Decimal("0")), "0.0%")
+        self.assertEqual(beer_tags.abv(Decimal("0.1")), "0.1%")
+        self.assertEqual(beer_tags.abv(Decimal("1.0")), "1.0%")
+        self.assertEqual(beer_tags.abv(Decimal("10.0")), "10.0%")
+        self.assertEqual(beer_tags.abv(Decimal("99.9")), "99.9%")
 
 
 class UserStarredBeerTemplateTagTest(UserBeerTemplateTagBaseTest):

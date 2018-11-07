@@ -29,7 +29,8 @@ class Beer(models.Model):
     name = models.CharField(max_length=200)
     number = models.PositiveSmallIntegerField(null=True, blank=True)
     reserved = models.BooleanField(default=False)
-    abv = models.PositiveSmallIntegerField(null=True, blank=True)
+    abv = models.DecimalField(
+        max_digits=3, decimal_places=1, null=True, blank=True)
     tasting_notes = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 

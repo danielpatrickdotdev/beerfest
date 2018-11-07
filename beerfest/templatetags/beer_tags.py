@@ -19,8 +19,7 @@ def abv(value):
     if value is None:
         return "TBC"
 
-    s = str(value)
-    return s[:-1] + "." + s[-1:] + "%"
+    return f"{value:.1f}%"
 
 
 @register.simple_tag

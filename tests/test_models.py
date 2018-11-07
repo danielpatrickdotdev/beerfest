@@ -1,3 +1,6 @@
+from decimal import Decimal, InvalidOperation
+
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
@@ -81,7 +84,7 @@ class TestBeer(TestCase):
             "brewery": self.brewery,
             "name": "Test IPA",
             "reserved": True,
-            "abv": 41
+            "abv": "4.1"
         }
 
         self.another_beer_kwargs = {
@@ -89,7 +92,7 @@ class TestBeer(TestCase):
             "brewery": self.brewery,
             "name": "Test Mild",
             "number": 1,
-            "abv": 45,
+            "abv": "4.5",
             "tasting_notes": "Dark brown with low IBU",
             "notes": "N/A"
         }
@@ -103,7 +106,7 @@ class TestBeer(TestCase):
         self.assertEqual(beer.brewery, self.brewery)
         self.assertEqual(beer.name, "Test IPA")
         self.assertEqual(beer.reserved, True)
-        self.assertEqual(beer.abv, 41)
+        self.assertEqual(beer.abv, Decimal("4.1"))
         self.assertEqual(beer.tasting_notes, "")
         self.assertEqual(beer.notes, "")
 
@@ -112,7 +115,7 @@ class TestBeer(TestCase):
         self.assertEqual(another_beer.brewery, self.brewery)
         self.assertEqual(another_beer.name, "Test Mild")
         self.assertEqual(another_beer.number, 1)
-        self.assertEqual(another_beer.abv, 45)
+        self.assertEqual(another_beer.abv, Decimal("4.5"))
         self.assertEqual(another_beer.tasting_notes, "Dark brown with low IBU")
         self.assertEqual(another_beer.notes, "N/A")
 
@@ -129,10 +132,35 @@ class TestBeer(TestCase):
         kwargs = self.beer_kwargs.copy()
         kwargs["bar"] = models.Bar.objects.create(name="Test Bar 2")
         kwargs["reserved"] = False
-        kwargs["abv"] = 55
+        kwargs["abv"] = "5.5"
 
         with self.assertRaises(IntegrityError):
             models.Beer.objects.create(**kwargs)
+
+    def test_create_with_valid_abv(self):
+        valid_abvs = ["0.0", "0.1", "1.0", "99.9"]
+        for n in range(len(valid_abvs)):
+            beer = models.Beer.objects.create(
+                bar=self.bar, brewery=self.brewery,
+                name=f"Test Brew {n}", abv=valid_abvs[n]
+            )
+            beer.refresh_from_db()
+            self.assertEqual(beer.abv, Decimal(valid_abvs[n]))
+
+    def test_create_with_too_large_abv(self):
+        with self.assertRaises(InvalidOperation):
+            models.Beer.objects.create(
+                bar=self.bar, brewery=self.brewery, abv="100")
+
+    def test_validation_error_with_too_large_abv(self):
+        beer = models.Beer(bar=self.bar, brewery=self.brewery, abv="100")
+        expected_msg = (
+            "Ensure that there are no more than "
+            "2 digits before the decimal point."
+        )
+
+        with self.assertRaisesMessage(ValidationError, expected_msg):
+            beer.full_clean()
 
     def test_default_ordering(self):
         for n in [3, 1, 5, 0]:
