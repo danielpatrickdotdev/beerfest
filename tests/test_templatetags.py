@@ -27,7 +27,7 @@ class UserBeerTemplateTagBaseTest(TemplateTagBaseTest):
     def setUp(self):
         super().setUp()
         self.user = factories.create_user()
-        factories.create_star_beer(
+        factories.star_beer(
             user=self.user, beer=self.beer1)
 
 

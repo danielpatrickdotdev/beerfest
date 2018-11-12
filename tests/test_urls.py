@@ -6,7 +6,7 @@ from tests import factories
 
 class URLTestBase(TestCase):
     def setUp(self):
-        factories.create_star_beer()
+        factories.star_beer()
 
 
 class TestIndexURL(URLTestBase):
