@@ -58,23 +58,7 @@ class BeerDetailView(DetailView):
 
 class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
     model = StarBeer
-    http_method_names = ['put']
-    raise_exception = True  # raise 403 for unauthenticated users
-
-    def get_object(self):
-        return super().get_object(queryset=Beer.objects.all())
-
-    def put(self, request, *args, **kwargs):
-        beer = self.get_object()
-        self.object = self.model.objects.get_or_create(
-            user=self.request.user, beer=beer
-        )
-        return HttpResponse(status=204)
-
-
-class UnstarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
-    model = StarBeer
-    http_method_names = ['delete']
+    http_method_names = ['delete', 'put']
     raise_exception = True  # raise 403 for unauthenticated users
 
     def get_object(self):
@@ -90,4 +74,11 @@ class UnstarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
             pass
         else:
             obj.delete()
+        return HttpResponse(status=204)
+
+    def put(self, request, *args, **kwargs):
+        beer = self.get_object()
+        self.object = self.model.objects.get_or_create(
+            user=self.request.user, beer=beer
+        )
         return HttpResponse(status=204)

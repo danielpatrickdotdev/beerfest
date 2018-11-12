@@ -372,22 +372,6 @@ class TestStarBeerView(BaseViewTest):
         self.assertTrue(qs.exists())
         self.assertEqual(response.status_code, 204)
 
-
-class TestUnstarBeerView(BaseViewTest):
-    view_class = views.UnstarBeerView
-
-    def setUp(self):
-        super().setUp()
-        bar = factories.create_bar()
-        brewery = factories.create_brewery()
-
-        self.beer1 = factories.create_beer(
-            bar=bar, brewery=brewery, name="IPA")
-        self.beer2 = factories.create_beer(
-            bar=bar, brewery=brewery, name="Mild")
-
-        factories.star_beer(user=self.user, beer=self.beer1)
-
     def test_unstar_beer(self):
         request = self.factory.delete("")
         request.user = self.user
@@ -435,7 +419,7 @@ class TestUnstarBeerView(BaseViewTest):
         # Just a sanity check; almost an integration test
         self.client.force_login(self.user)
 
-        response = self.client.delete("/beers/1/unstar/")
+        response = self.client.delete("/beers/1/star/")
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
         self.assertFalse(qs.exists())
