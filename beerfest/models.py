@@ -50,7 +50,7 @@ class StarBeer(models.Model):
                              related_name="starbeer")
 
     def __str__(self):
-        return f"{self.user.username} and {self.beer.name}"
+        return f"{self.user.username} starred {self.beer.name}"
 
     class Meta:
         ordering = ["id"]

@@ -205,7 +205,7 @@ class TestStarBeer(TestCase):
 
     def test_string_representation(self):
         ub = models.StarBeer.objects.create(user=self.user, beer=self.beer1)
-        self.assertEqual(str(ub), "Mx Test and Test IPA")
+        self.assertEqual(str(ub), "Mx Test starred Test IPA")
 
     def test_beer_must_be_unique_with_user(self):
         models.StarBeer.objects.create(user=self.user, beer=self.beer1)
@@ -230,8 +230,8 @@ class TestStarBeer(TestCase):
         ]
 
         self.assertEqual(starbeer_strings, [
-            "Mx Test and Test Beer 3",
-            "Mx Test and Test Beer 1",
-            "Mx Test and Test Beer 5",
-            "Mx Test and Test Beer 0",
+            "Mx Test starred Test Beer 3",
+            "Mx Test starred Test Beer 1",
+            "Mx Test starred Test Beer 5",
+            "Mx Test starred Test Beer 0",
         ])
