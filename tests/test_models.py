@@ -190,8 +190,6 @@ class TestStarBeer(TestCase):
     def test_create_and_retrieve_starbeer(self):
         models.StarBeer.objects.create(user=self.user, beer=self.beer1)
 
-        star_beer1 = models.StarBeer.objects.get(id=1)
-
         self.assertTrue(
             models.StarBeer.objects.filter(
                 user=self.user, beer=self.beer1

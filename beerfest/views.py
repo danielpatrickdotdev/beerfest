@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.db.models.expressions import Exists, OuterRef
 from django.views.generic import RedirectView, DetailView, ListView, View

@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
