@@ -7,7 +7,7 @@ from django.db import connection
 from tests import factories
 
 
-class TestMigration0005Forward(TestCase):
+class TestMigration0005(TestCase):
 
     migrate_from = [("beerfest", "0004_auto_20181026_0212")]
     migrate_to = [("beerfest", "0005_alter_beer_abv")]
