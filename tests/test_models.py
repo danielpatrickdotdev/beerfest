@@ -2,6 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.forms import ModelForm
 from django.test import TestCase
 
 from beerfest import models
@@ -232,4 +233,85 @@ class TestStarBeer(TestCase):
             "Mx Test starred Test Beer 1",
             "Mx Test starred Test Beer 5",
             "Mx Test starred Test Beer 0",
+        ])
+
+
+class TestBeerRating(TestCase):
+    def setUp(self):
+        self.user = factories.create_user()
+        self.brewery = factories.create_brewery()
+        self.bar = factories.create_bar()
+        self.beer1 = factories.create_beer(name="Test IPA",
+                                           brewery=self.brewery, bar=self.bar)
+        self.beer2 = factories.create_beer(name="Test Mild",
+                                           brewery=self.brewery, bar=self.bar)
+
+    def test_create_and_retrieve_beerrating(self):
+        models.BeerRating.objects.create(
+            user=self.user, beer=self.beer1, rating=5
+        )
+
+        rating1 = models.BeerRating.objects.get(
+            user=self.user, beer=self.beer1)
+
+        self.assertEqual(rating1.rating, 5)
+
+        self.assertFalse(
+            models.BeerRating.objects.filter(
+                user=self.user, beer=self.beer2
+            ).exists()
+        )
+
+    def test_string_representation(self):
+        rating = models.BeerRating.objects.create(
+            user=self.user, beer=self.beer1, rating=5)
+        self.assertEqual(str(rating), "Mx Test rated Test IPA 5")
+
+    def test_beer_must_be_unique_with_user(self):
+        models.BeerRating.objects.create(
+            user=self.user, beer=self.beer1, rating=1
+        )
+
+        with self.assertRaises(IntegrityError):
+            models.BeerRating.objects.create(
+                user=self.user, beer=self.beer1, rating=2
+            )
+
+    def test_validation(self):
+        class RatingForm(ModelForm):
+            class Meta:
+                model = models.BeerRating
+                fields = ["user", "beer", "rating"]
+
+        def populate_form(rating):
+            form = RatingForm({"user": self.user.id, "beer": self.beer1.id,
+                               "rating": rating})
+            return form
+
+        for invalid_value in [-1, 0, 0.5, 3.5, 5.6, 6]:
+            form = populate_form(invalid_value)
+            self.assertFalse(form.is_valid())
+
+        for valid_value in [1, 2, 3, 4, 5]:
+            form = populate_form(valid_value)
+            self.assertTrue(form.is_valid())
+
+    def test_default_ordering(self):
+        for n in [3, 1, 5, 2]:
+            beer = models.Beer.objects.create(
+                bar=self.bar, brewery=self.brewery, name=f"Test Beer {n}"
+            )
+            models.BeerRating.objects.create(
+                user=self.user, beer=beer, rating=n
+            )
+
+        beer_rating_strings = [
+            str(br) for br in models.BeerRating.objects.all()
+        ]
+
+        self.assertEqual(beer_rating_strings, [
+            "Mx Test rated Test Beer 3 3",
+            "Mx Test rated Test Beer 1 1",
+            "Mx Test rated Test Beer 5 5",
+            "Mx Test rated Test Beer 2 2",
         ])

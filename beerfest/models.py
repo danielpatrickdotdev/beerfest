@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Brewery(models.Model):
@@ -51,6 +52,24 @@ class StarBeer(models.Model):
 
     def __str__(self):
         return f"{self.user.username} starred {self.beer.name}"
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = ["user", "beer"]
+
+
+class BeerRating(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE,
+                             related_name="beer_rating")
+    beer = models.ForeignKey(Beer, on_delete=models.CASCADE,
+                             related_name="beer_rating")
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+
+    def __str__(self):
+        return f"{self.user.username} rated {self.beer.name} {self.rating}"
 
     class Meta:
         ordering = ["id"]
