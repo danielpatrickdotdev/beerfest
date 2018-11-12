@@ -42,12 +42,12 @@ class Beer(models.Model):
         unique_together = ["brewery", "name"]
 
 
-class UserBeer(models.Model):
+class StarBeer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE,
-                             related_name="userbeer")
+                             related_name="starbeer")
     beer = models.ForeignKey(Beer, on_delete=models.CASCADE,
-                             related_name="userbeer")
+                             related_name="starbeer")
     starred = models.BooleanField(default=True)
 
     def __str__(self):

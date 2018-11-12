@@ -7,7 +7,7 @@ from django.db.models.functions import Coalesce
 from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
-from .models import Beer, UserBeer
+from .models import Beer, StarBeer
 
 
 User = get_user_model()
@@ -29,7 +29,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         context_data = super().get_context_data(**kwargs)
 
         beer_list = Beer.objects.filter(
-            userbeer__user=self.request.user, userbeer__starred=True
+            starbeer__user=self.request.user, starbeer__starred=True
         ).distinct().select_related("bar", "brewery")
         context_data["beer_list"] = beer_list
 
@@ -45,7 +45,7 @@ class BeerListView(ListView):
             "bar", "brewery"
         )
         if user is not None and user.is_authenticated:
-            starred = UserBeer.objects.filter(
+            starred = StarBeer.objects.filter(
                 user_id=user.id,
                 beer_id=OuterRef("id")
             )[:1].values("starred")
@@ -61,7 +61,7 @@ class BeerDetailView(DetailView):
 
 
 class StarBeerBaseView(LoginRequiredMixin, SingleObjectMixin, View):
-    model = UserBeer
+    model = StarBeer
     http_method_names = ['post']
     raise_exception = True  # raise 403 for unauthenticated users
     star_beer = None

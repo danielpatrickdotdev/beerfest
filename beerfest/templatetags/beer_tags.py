@@ -1,6 +1,6 @@
 from django import template
 
-from beerfest.models import UserBeer
+from beerfest.models import StarBeer
 
 
 register = template.Library()
@@ -24,7 +24,7 @@ def abv(value):
 
 @register.simple_tag
 def user_starred_beer(user_id, beer_id):
-    return UserBeer.objects.filter(
+    return StarBeer.objects.filter(
         user__id=user_id, beer__id=beer_id, starred=True
     ).exists()
 

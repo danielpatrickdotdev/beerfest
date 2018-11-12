@@ -51,13 +51,13 @@ def create_beer(**kwargs):
     return models.Beer.objects.create(**data)
 
 
-def create_user_beer(user=None, beer=None, starred=True):
+def create_star_beer(user=None, beer=None, starred=True):
     if user is None:
         user = create_user()
 
     if beer is None:
         beer = create_beer()
 
-    return models.UserBeer.objects.create(
+    return models.StarBeer.objects.create(
         user=user, beer=beer, starred=starred
     )

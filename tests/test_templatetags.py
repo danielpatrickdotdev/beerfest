@@ -7,7 +7,7 @@ from django.test import TestCase, RequestFactory
 
 from tests import factories
 
-from beerfest.models import Beer, UserBeer
+from beerfest.models import Beer, StarBeer
 from beerfest.templatetags import beer_tags
 
 
@@ -30,9 +30,9 @@ class UserBeerTemplateTagBaseTest(TemplateTagBaseTest):
     def setUp(self):
         super().setUp()
         self.user = factories.create_user()
-        factories.create_user_beer(
+        factories.create_star_beer(
             user=self.user, beer=self.beer1, starred=True)
-        factories.create_user_beer(
+        factories.create_star_beer(
             user=self.user, beer=self.beer2, starred=False)
 
 
@@ -152,7 +152,7 @@ class UserStarredBeerTemplateTagTest(UserBeerTemplateTagBaseTest):
 class DisplayBeerTableTemplateTagTest(UserBeerTemplateTagBaseTest):
     def test_renders_expected_table(self):
         beer_list = Beer.objects.all()
-        starred = UserBeer.objects.filter(
+        starred = StarBeer.objects.filter(
             user_id=self.user.id,
             beer_id=OuterRef("id")
         )[:1].values("starred")
@@ -178,7 +178,7 @@ class DisplayBeerTableTemplateTagTest(UserBeerTemplateTagBaseTest):
 class DisplayBeerTableWithStarsTemplateTagTest(UserBeerTemplateTagBaseTest):
     def test_renders_expected_table(self):
         beer_list = Beer.objects.all()
-        starred = UserBeer.objects.filter(
+        starred = StarBeer.objects.filter(
             user_id=self.user.id,
             beer_id=OuterRef("id")
         )[:1].values("starred")

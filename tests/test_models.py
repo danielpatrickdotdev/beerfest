@@ -177,7 +177,7 @@ class TestBeer(TestCase):
         ])
 
 
-class TestUserBeer(TestCase):
+class TestStarBeer(TestCase):
     def setUp(self):
         self.user = factories.create_user()
         self.brewery = factories.create_brewery()
@@ -189,35 +189,35 @@ class TestUserBeer(TestCase):
         self.beer3 = factories.create_beer(name="Test DIPA",
                                            brewery=self.brewery, bar=self.bar)
 
-    def test_create_and_retrieve_userbeer(self):
-        models.UserBeer.objects.create(user=self.user, beer=self.beer1)
-        models.UserBeer.objects.create(user=self.user, beer=self.beer2,
+    def test_create_and_retrieve_starbeer(self):
+        models.StarBeer.objects.create(user=self.user, beer=self.beer1)
+        models.StarBeer.objects.create(user=self.user, beer=self.beer2,
                                        starred=False)
-        models.UserBeer.objects.create(user=self.user, beer=self.beer3,
+        models.StarBeer.objects.create(user=self.user, beer=self.beer3,
                                        starred=True)
 
-        user_beer1 = models.UserBeer.objects.get(id=1)
-        user_beer2 = models.UserBeer.objects.get(id=2)
-        user_beer3 = models.UserBeer.objects.get(id=3)
+        star_beer1 = models.StarBeer.objects.get(id=1)
+        star_beer2 = models.StarBeer.objects.get(id=2)
+        star_beer3 = models.StarBeer.objects.get(id=3)
 
-        self.assertEqual(user_beer1.user, self.user)
-        self.assertEqual(user_beer1.beer, self.beer1)
-        self.assertEqual(user_beer1.starred, True)
+        self.assertEqual(star_beer1.user, self.user)
+        self.assertEqual(star_beer1.beer, self.beer1)
+        self.assertEqual(star_beer1.starred, True)
 
-        self.assertEqual(user_beer2.user, self.user)
-        self.assertEqual(user_beer2.beer, self.beer2)
-        self.assertEqual(user_beer2.starred, False)
+        self.assertEqual(star_beer2.user, self.user)
+        self.assertEqual(star_beer2.beer, self.beer2)
+        self.assertEqual(star_beer2.starred, False)
 
-        self.assertEqual(user_beer3.user, self.user)
-        self.assertEqual(user_beer3.beer, self.beer3)
-        self.assertEqual(user_beer3.starred, True)
+        self.assertEqual(star_beer3.user, self.user)
+        self.assertEqual(star_beer3.beer, self.beer3)
+        self.assertEqual(star_beer3.starred, True)
 
     def test_string_representation(self):
-        ub = models.UserBeer.objects.create(user=self.user, beer=self.beer1)
+        ub = models.StarBeer.objects.create(user=self.user, beer=self.beer1)
         self.assertEqual(str(ub), "Mx Test and Test IPA")
 
     def test_beer_must_be_unique_with_user(self):
-        models.UserBeer.objects.create(user=self.user, beer=self.beer1)
+        models.StarBeer.objects.create(user=self.user, beer=self.beer1)
 
         kwargs = {
             "user": self.user,
@@ -226,20 +226,20 @@ class TestUserBeer(TestCase):
         }
 
         with self.assertRaises(IntegrityError):
-            models.UserBeer.objects.create(**kwargs)
+            models.StarBeer.objects.create(**kwargs)
 
     def test_default_ordering(self):
         for n in [3, 1, 5, 0]:
             beer = models.Beer.objects.create(
                 bar=self.bar, brewery=self.brewery, name=f"Test Beer {n}"
             )
-            models.UserBeer.objects.create(user=self.user, beer=beer)
+            models.StarBeer.objects.create(user=self.user, beer=beer)
 
-        userbeer_strings = [
-            str(ub) for ub in models.UserBeer.objects.all()
+        starbeer_strings = [
+            str(ub) for ub in models.StarBeer.objects.all()
         ]
 
-        self.assertEqual(userbeer_strings, [
+        self.assertEqual(starbeer_strings, [
             "Mx Test and Test Beer 3",
             "Mx Test and Test Beer 1",
             "Mx Test and Test Beer 5",
