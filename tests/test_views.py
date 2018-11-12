@@ -320,17 +320,17 @@ class TestStarBeerView(BaseViewTest):
         factories.star_beer(user=self.user, beer=self.beer1)
 
     def test_star_beer(self):
-        request = self.factory.post("")
+        request = self.factory.put("")
         request.user = self.user
         view = self.setup_view(request, pk=2)
 
-        view.post(request)
+        view.put(request)
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
         self.assertTrue(qs.exists())
 
     def test_star_beer_anonymous_forbidden(self):
-        request = self.factory.post("")
+        request = self.factory.put("")
         request.user = AnonymousUser()
         view = self.setup_view(request, pk=2)
 
@@ -343,20 +343,20 @@ class TestStarBeerView(BaseViewTest):
         self.assertFalse(qs.exists())
 
     def test_star_beer_returns_204(self):
-        request = self.factory.post("")
+        request = self.factory.put("")
         request.user = self.user
         view = self.setup_view(request, pk=2)
 
-        response = view.post(request)
+        response = view.put(request)
 
         self.assertEqual(response.status_code, 204)
 
     def test_star_beer_already_starred_has_no_effect(self):
-        request = self.factory.post("")
+        request = self.factory.put("")
         request.user = self.user
         view = self.setup_view(request, pk=1)
 
-        response = view.post(request)
+        response = view.put(request)
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
         self.assertTrue(qs.exists())
@@ -366,7 +366,7 @@ class TestStarBeerView(BaseViewTest):
         # Just a sanity check; almost an integration test
         self.client.force_login(self.user)
 
-        response = self.client.post("/beers/2/star/")
+        response = self.client.put("/beers/2/star/")
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
         self.assertTrue(qs.exists())
@@ -389,17 +389,17 @@ class TestUnstarBeerView(BaseViewTest):
         factories.star_beer(user=self.user, beer=self.beer1)
 
     def test_unstar_beer(self):
-        request = self.factory.post("")
+        request = self.factory.delete("")
         request.user = self.user
         view = self.setup_view(request, pk=1)
 
-        view.post(request)
+        view.delete(request)
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
         self.assertFalse(qs.exists())
 
     def test_unstar_beer_anonymous_forbidden(self):
-        request = self.factory.post("")
+        request = self.factory.delete("")
         request.user = AnonymousUser()
         view = self.setup_view(request, pk=1)
 
@@ -412,20 +412,20 @@ class TestUnstarBeerView(BaseViewTest):
         self.assertTrue(qs.exists())
 
     def test_unstar_beer_returns_204(self):
-        request = self.factory.post("")
+        request = self.factory.delete("")
         request.user = self.user
         view = self.setup_view(request, pk=1)
 
-        response = view.post(request)
+        response = view.delete(request)
 
         self.assertEqual(response.status_code, 204)
 
     def test_unstar_beer_already_unstarred_has_no_effect(self):
-        request = self.factory.post("")
+        request = self.factory.delete("")
         request.user = self.user
         view = self.setup_view(request, pk=2)
 
-        response = view.post(request)
+        response = view.delete(request)
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
         self.assertFalse(qs.exists())
@@ -435,7 +435,7 @@ class TestUnstarBeerView(BaseViewTest):
         # Just a sanity check; almost an integration test
         self.client.force_login(self.user)
 
-        response = self.client.post("/beers/1/unstar/")
+        response = self.client.delete("/beers/1/unstar/")
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
         self.assertFalse(qs.exists())
