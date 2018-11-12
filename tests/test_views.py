@@ -39,12 +39,11 @@ class TestUserProfileView(BaseViewTest):
         brewery = factories.create_brewery()
         beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
         beer2 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
-        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Bitter")
+        factories.create_beer(bar=bar, brewery=brewery, name="Bitter")
         factories.create_beer(bar=bar, brewery=brewery, name="Stout")
 
-        factories.create_star_beer(user=self.user, beer=beer1, starred=True)
-        factories.create_star_beer(user=self.user, beer=beer2, starred=True)
-        factories.create_star_beer(user=self.user, beer=beer3, starred=False)
+        factories.create_star_beer(user=self.user, beer=beer1)
+        factories.create_star_beer(user=self.user, beer=beer2)
 
         return (beer1, beer2)
 
@@ -132,11 +131,14 @@ class TestBeerListView(BaseViewTest):
     def create_beers(self):
         bar = factories.create_bar()
         brewery = factories.create_brewery()
-        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
-        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
-        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Stout")
+        self.beer1 = factories.create_beer(
+            bar=bar, brewery=brewery, name="IPA")
+        self.beer2 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Mild")
+        self.beer3 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Stout")
 
-        return (beer1, beer2, beer3)
+        return (self.beer1, self.beer2, self.beer3)
 
     def test_GETs_beer_list_context_variable(self):
         beers = self.create_beers()
@@ -181,9 +183,8 @@ class TestBeerListView(BaseViewTest):
         self.assertCountEqual(beer_list, beers)
 
     def test_get_queryset_annotates_starred_status_if_user_logged_in(self):
-        beer1, beer2, beer3 = self.create_beers()
-        factories.create_star_beer(user=self.user, beer=beer1, starred=True)
-        factories.create_star_beer(user=self.user, beer=beer2, starred=False)
+        self.create_beers()
+        factories.create_star_beer(user=self.user, beer=self.beer1)
 
         request = self.factory.get("")
         request.user = self.user
@@ -195,11 +196,11 @@ class TestBeerListView(BaseViewTest):
         self.assertEqual(qs[2].starred, False)
 
     def test_GETs_annotated_beer_list_context_variable(self):
-        beer1, beer2, beer3 = self.create_beers()
-        factories.create_star_beer(user=self.user, beer=beer1, starred=True)
-        factories.create_star_beer(user=self.user, beer=beer2, starred=False)
+        self.create_beers()
+        factories.create_star_beer(
+            user=self.user, beer=self.beer1)
         user2 = factories.create_user("Ms Test")
-        factories.create_star_beer(user=user2, beer=beer1, starred=False)
+        factories.create_star_beer(user=user2, beer=self.beer2)
 
         request = self.factory.get("")
         request.user = self.user
@@ -214,13 +215,13 @@ class TestBeerListView(BaseViewTest):
     def test_beer_annotations_do_not_cause_duplicates(self):
         # Some types of DB queries result in duplicates - eg repeating a beer
         # for each value of starred. Test that we haven't formed such a query.
-        beer1, beer2, beer3 = self.create_beers()
-        factories.create_star_beer(user=self.user, beer=beer1, starred=True)
-        factories.create_star_beer(user=self.user, beer=beer2, starred=False)
+        self.create_beers()
+        factories.create_star_beer(user=self.user, beer=self.beer1)
+        factories.create_star_beer(user=self.user, beer=self.beer2)
 
         user2 = factories.create_user("A Test")
-        factories.create_star_beer(user=user2, beer=beer1, starred=False)
-        factories.create_star_beer(user=user2, beer=beer3, starred=True)
+        factories.create_star_beer(user=user2, beer=self.beer1)
+        factories.create_star_beer(user=user2, beer=self.beer3)
 
         request = self.factory.get("")
         request.user = self.user
@@ -315,23 +316,18 @@ class TestStarBeerView(BaseViewTest):
             bar=bar, brewery=brewery, name="IPA")
         self.beer2 = factories.create_beer(
             bar=bar, brewery=brewery, name="Mild")
-        self.beer3 = factories.create_beer(
-            bar=bar, brewery=brewery, name="Stout")
 
-        factories.create_star_beer(user=self.user, beer=self.beer1,
-                                   starred=True)
-        factories.create_star_beer(user=self.user, beer=self.beer2,
-                                   starred=False)
+        factories.create_star_beer(user=self.user, beer=self.beer1)
 
     def test_star_beer(self):
         request = self.factory.post("")
         request.user = self.user
-        view = self.setup_view(request, pk=3)
+        view = self.setup_view(request, pk=2)
 
         view.post(request)
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer3)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
-        self.assertTrue(star_beer.starred)
+        self.assertTrue(qs.exists())
 
     def test_star_beer_anonymous_forbidden(self):
         request = self.factory.post("")
@@ -342,14 +338,14 @@ class TestStarBeerView(BaseViewTest):
             # Use view.dispatch as this is where logged in status is checked
             view.dispatch(request)
 
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer2)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
-        self.assertFalse(star_beer.starred)
+        self.assertFalse(qs.exists())
 
     def test_star_beer_returns_204(self):
         request = self.factory.post("")
         request.user = self.user
-        view = self.setup_view(request, pk=3)
+        view = self.setup_view(request, pk=2)
 
         response = view.post(request)
 
@@ -361,19 +357,19 @@ class TestStarBeerView(BaseViewTest):
         view = self.setup_view(request, pk=1)
 
         response = view.post(request)
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer1)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
-        self.assertTrue(star_beer.starred)
+        self.assertTrue(qs.exists())
         self.assertEqual(response.status_code, 204)
 
     def test_star_beer_using_test_client(self):
         # Just a sanity check; almost an integration test
         self.client.force_login(self.user)
 
-        response = self.client.post("/beers/3/star/")
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer3)
+        response = self.client.post("/beers/2/star/")
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
-        self.assertTrue(star_beer.starred)
+        self.assertTrue(qs.exists())
         self.assertEqual(response.status_code, 204)
 
 
@@ -389,13 +385,8 @@ class TestUnstarBeerView(BaseViewTest):
             bar=bar, brewery=brewery, name="IPA")
         self.beer2 = factories.create_beer(
             bar=bar, brewery=brewery, name="Mild")
-        self.beer3 = factories.create_beer(
-            bar=bar, brewery=brewery, name="Stout")
 
-        factories.create_star_beer(user=self.user, beer=self.beer1,
-                                   starred=True)
-        factories.create_star_beer(user=self.user, beer=self.beer2,
-                                   starred=False)
+        factories.create_star_beer(user=self.user, beer=self.beer1)
 
     def test_unstar_beer(self):
         request = self.factory.post("")
@@ -403,9 +394,9 @@ class TestUnstarBeerView(BaseViewTest):
         view = self.setup_view(request, pk=1)
 
         view.post(request)
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer1)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
-        self.assertFalse(star_beer.starred)
+        self.assertFalse(qs.exists())
 
     def test_unstar_beer_anonymous_forbidden(self):
         request = self.factory.post("")
@@ -416,14 +407,14 @@ class TestUnstarBeerView(BaseViewTest):
             # Use view.dispatch as this is where logged in status is checked
             view.dispatch(request)
 
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer1)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
-        self.assertTrue(star_beer.starred)
+        self.assertTrue(qs.exists())
 
     def test_unstar_beer_returns_204(self):
         request = self.factory.post("")
         request.user = self.user
-        view = self.setup_view(request, pk=3)
+        view = self.setup_view(request, pk=1)
 
         response = view.post(request)
 
@@ -435,20 +426,9 @@ class TestUnstarBeerView(BaseViewTest):
         view = self.setup_view(request, pk=2)
 
         response = view.post(request)
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer2)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer2)
 
-        self.assertFalse(star_beer.starred)
-        self.assertEqual(response.status_code, 204)
-
-    def test_unstar_beer_never_starred_creates_unstarred_userbeer_object(self):
-        request = self.factory.post("")
-        request.user = self.user
-        view = self.setup_view(request, pk=3)
-
-        response = view.post(request)
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer3)
-
-        self.assertFalse(star_beer.starred)
+        self.assertFalse(qs.exists())
         self.assertEqual(response.status_code, 204)
 
     def test_unstar_beer_using_test_client(self):
@@ -456,9 +436,9 @@ class TestUnstarBeerView(BaseViewTest):
         self.client.force_login(self.user)
 
         response = self.client.post("/beers/1/unstar/")
-        star_beer = StarBeer.objects.get(user=self.user, beer=self.beer1)
+        qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
 
-        self.assertFalse(star_beer.starred)
+        self.assertFalse(qs.exists())
         self.assertEqual(response.status_code, 204)
 
 

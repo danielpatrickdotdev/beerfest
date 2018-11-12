@@ -2,8 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
-from django.db.models.expressions import OuterRef, Subquery
-from django.db.models.functions import Coalesce
+from django.db.models.expressions import Exists, OuterRef
 from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
@@ -29,7 +28,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         context_data = super().get_context_data(**kwargs)
 
         beer_list = Beer.objects.filter(
-            starbeer__user=self.request.user, starbeer__starred=True
+            starbeer__user=self.request.user
         ).distinct().select_related("bar", "brewery")
         context_data["beer_list"] = beer_list
 
@@ -45,14 +44,11 @@ class BeerListView(ListView):
             "bar", "brewery"
         )
         if user is not None and user.is_authenticated:
-            starred = StarBeer.objects.filter(
-                user_id=user.id,
-                beer_id=OuterRef("id")
-            )[:1].values("starred")
-
-            qs = qs.annotate(
-                starred=Coalesce(Subquery(starred), False)
+            star_beer = StarBeer.objects.filter(
+                user=user.pk,
+                beer=OuterRef("pk")
             )
+            qs = qs.annotate(starred=Exists(star_beer))
         return qs
 
 
@@ -75,10 +71,19 @@ class StarBeerBaseView(LoginRequiredMixin, SingleObjectMixin, View):
                 f"{self.__class__.__name__} is missing a star_beer attribute"
             )
         beer = self.get_object()
-        self.object = self.model.objects.update_or_create(
-            user=self.request.user, beer=beer,
-            defaults={"starred": self.star_beer}
-        )
+        if self.star_beer:
+            self.object = self.model.objects.get_or_create(
+                user=self.request.user, beer=beer
+            )
+        else:
+            try:
+                obj = self.model.objects.get(
+                    user=self.request.user, beer=beer
+                )
+            except self.model.DoesNotExist:
+                pass
+            else:
+                obj.delete()
         return HttpResponse(status=204)
 
 

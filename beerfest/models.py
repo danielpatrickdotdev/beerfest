@@ -48,7 +48,6 @@ class StarBeer(models.Model):
                              related_name="starbeer")
     beer = models.ForeignKey(Beer, on_delete=models.CASCADE,
                              related_name="starbeer")
-    starred = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.user.username} and {self.beer.name}"

@@ -25,7 +25,7 @@ def abv(value):
 @register.simple_tag
 def user_starred_beer(user_id, beer_id):
     return StarBeer.objects.filter(
-        user__id=user_id, beer__id=beer_id, starred=True
+        user__id=user_id, beer__id=beer_id
     ).exists()
 
 

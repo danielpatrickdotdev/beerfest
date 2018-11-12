@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.test import TestCase
+from django.core.exceptions import FieldDoesNotExist
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
 
@@ -87,3 +88,76 @@ class TestMigration0005(TestCase):
 
         for n in range(len(values_to_test)):
             self.assertEqual(beer_list[n].abv, values_to_test[n][1])
+
+
+class TestMigration0008(TestCase):
+
+    migrate_from = [("beerfest", "0007_auto_20181112_0844")]
+    migrate_to = [("beerfest", "0008_remove_starbeer_starred")]
+
+    def migrate(self, migration):
+        # Reverse to the original migration
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()  # reload.
+        executor.migrate(migration)
+
+        return executor.loader.project_state(migration).apps
+
+    def create_beers(self, apps, starred=1, unstarred=1):
+        User = apps.get_model("auth", "User")
+        user = User.objects.create(username="Test User")
+        Brewery = apps.get_model("beerfest", "Brewery")
+        brewery = Brewery.objects.create(
+            name="Test Brewery", location="Testville")
+        Bar = apps.get_model("beerfest", "Bar")
+        bar = Bar.objects.create(name="Test Bar")
+        Beer = apps.get_model("beerfest", "Beer")
+        StarBeer = apps.get_model("beerfest", "StarBeer")
+
+        for n in range(starred):
+            beer = Beer.objects.create(
+                bar=bar, brewery=brewery, name=f"Test Beer {n}")
+            StarBeer.objects.create(user=user, beer=beer)
+
+        try:
+            StarBeer._meta.get_field("starred")
+        except FieldDoesNotExist:
+            pass
+        else:
+            for n in range(starred, starred + unstarred):
+                beer = Beer.objects.create(
+                    bar=bar, brewery=brewery, name=f"Test Beer {n}")
+                StarBeer.objects.create(user=user, beer=beer, starred=False)
+
+    def test_starbeer_with_starred_False_deleted(self):
+        old_apps = self.migrate(self.migrate_from)
+        self.create_beers(old_apps, starred=0)
+        new_apps = self.migrate(self.migrate_to)
+
+        StarBeer = new_apps.get_model("beerfest", "StarBeer")
+
+        self.assertFalse(StarBeer.objects.all().exists())
+
+    def test_starbeer_with_starred_True_not_deleted(self):
+        old_apps = self.migrate(self.migrate_from)
+        self.create_beers(old_apps, unstarred=0)
+        new_apps = self.migrate(self.migrate_to)
+
+        StarBeer = new_apps.get_model("beerfest", "StarBeer")
+        starred = StarBeer.objects.all()
+        star_beer = starred[0]
+
+        self.assertEqual(len(starred), 1)
+        self.assertEqual(star_beer.beer.name, "Test Beer 0")
+
+    def test_reverse_migration(self):
+        old_apps = self.migrate(self.migrate_to)
+        self.create_beers(old_apps)
+        new_apps = self.migrate(self.migrate_from)
+
+        StarBeer = new_apps.get_model("beerfest", "StarBeer")
+        starred = StarBeer.objects.all()
+        star_beer = starred[0]
+
+        self.assertEqual(len(starred), 1)
+        self.assertEqual(star_beer.beer.name, "Test Beer 0")

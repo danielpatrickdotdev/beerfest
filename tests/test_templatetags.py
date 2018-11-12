@@ -1,7 +1,6 @@
 from decimal import Decimal
 
-from django.db.models.expressions import OuterRef, Subquery
-from django.db.models.functions import Coalesce
+from django.db.models.expressions import Exists, OuterRef
 from django.template import Context, Template
 from django.test import TestCase, RequestFactory
 
@@ -21,8 +20,6 @@ class TemplateTagBaseTest(TestCase):
             bar=bar, brewery=brewery, name="Star PA")
         self.beer2 = factories.create_beer(
             bar=bar, brewery=brewery, name="Try IPA")
-        self.beer3 = factories.create_beer(
-            bar=bar, brewery=brewery, name="Mild")
 
 
 class UserBeerTemplateTagBaseTest(TemplateTagBaseTest):
@@ -31,9 +28,7 @@ class UserBeerTemplateTagBaseTest(TemplateTagBaseTest):
         super().setUp()
         self.user = factories.create_user()
         factories.create_star_beer(
-            user=self.user, beer=self.beer1, starred=True)
-        factories.create_star_beer(
-            user=self.user, beer=self.beer2, starred=False)
+            user=self.user, beer=self.beer1)
 
 
 class NullableNumberFilterTest(TestCase):
@@ -114,7 +109,7 @@ class UserStarredBeerTemplateTagTest(UserBeerTemplateTagBaseTest):
             "{% load beer_tags %}"
             "{% user_starred_beer beer.id user.id as bool %}"
             "{% if not bool %}NOT {% endif %}STARRED"
-        ).render(Context({"beer": self.beer3, "user": self.user}))
+        ).render(Context({"beer": self.beer2, "user": self.user}))
 
         self.assertEqual(rendered, "NOT STARRED")
 
@@ -127,42 +122,26 @@ class UserStarredBeerTemplateTagTest(UserBeerTemplateTagBaseTest):
 
         self.assertEqual(rendered, "STARRED")
 
-    def test_assigns_False_in_template_if_user_has_unstarred_beer(self):
-        rendered = Template(
-            "{% load beer_tags %}"
-            "{% user_starred_beer beer.id user.id as bool %}"
-            "{% if not bool %}NOT {% endif %}STARRED"
-        ).render(Context({"beer": self.beer2, "user": self.user}))
-
-        self.assertEqual(rendered, "NOT STARRED")
-
     def test_returns_False_if_user_has_not_starred_beer(self):
-        starred = beer_tags.user_starred_beer(self.beer3.id, self.user.id)
+        starred = beer_tags.user_starred_beer(self.beer2.id, self.user.id)
         self.assertFalse(starred)
 
     def test_returns_True_if_user_has_starred_beer(self):
         starred = beer_tags.user_starred_beer(self.beer1.id, self.user.id)
         self.assertTrue(starred)
 
-    def test_returns_False_if_user_has_unstarred_beer(self):
-        starred = beer_tags.user_starred_beer(self.beer2.id, self.user.id)
-        self.assertFalse(starred)
-
 
 class DisplayBeerTableTemplateTagTest(UserBeerTemplateTagBaseTest):
     def test_renders_expected_table(self):
         beer_list = Beer.objects.all()
-        starred = StarBeer.objects.filter(
-            user_id=self.user.id,
-            beer_id=OuterRef("id")
-        )[:1].values("starred")
-        beer_list = beer_list.annotate(
-            starred=Coalesce(Subquery(starred), False)
+        star_beer = StarBeer.objects.filter(
+            user=self.user.pk,
+            beer=OuterRef("pk")
         )
+        beer_list = beer_list.annotate(starred=Exists(star_beer))
         expected = (
             "1 Star PA True | "
             "2 Try IPA False | "
-            "3 Mild False | "
             "Mx Test | "
             "False\n"
         )
@@ -178,17 +157,14 @@ class DisplayBeerTableTemplateTagTest(UserBeerTemplateTagBaseTest):
 class DisplayBeerTableWithStarsTemplateTagTest(UserBeerTemplateTagBaseTest):
     def test_renders_expected_table(self):
         beer_list = Beer.objects.all()
-        starred = StarBeer.objects.filter(
-            user_id=self.user.id,
-            beer_id=OuterRef("id")
-        )[:1].values("starred")
-        beer_list = beer_list.annotate(
-            starred=Coalesce(Subquery(starred), False)
+        star_beer = StarBeer.objects.filter(
+            user=self.user.pk,
+            beer=OuterRef("pk")
         )
+        beer_list = beer_list.annotate(starred=Exists(star_beer))
         expected = (
             "1 Star PA True | "
             "2 Try IPA False | "
-            "3 Mild False | "
             "Mx Test | "
             "True\n"
         )

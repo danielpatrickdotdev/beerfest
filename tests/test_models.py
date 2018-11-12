@@ -186,31 +186,22 @@ class TestStarBeer(TestCase):
                                            brewery=self.brewery, bar=self.bar)
         self.beer2 = factories.create_beer(name="Test Mild",
                                            brewery=self.brewery, bar=self.bar)
-        self.beer3 = factories.create_beer(name="Test DIPA",
-                                           brewery=self.brewery, bar=self.bar)
 
     def test_create_and_retrieve_starbeer(self):
         models.StarBeer.objects.create(user=self.user, beer=self.beer1)
-        models.StarBeer.objects.create(user=self.user, beer=self.beer2,
-                                       starred=False)
-        models.StarBeer.objects.create(user=self.user, beer=self.beer3,
-                                       starred=True)
 
         star_beer1 = models.StarBeer.objects.get(id=1)
-        star_beer2 = models.StarBeer.objects.get(id=2)
-        star_beer3 = models.StarBeer.objects.get(id=3)
 
-        self.assertEqual(star_beer1.user, self.user)
-        self.assertEqual(star_beer1.beer, self.beer1)
-        self.assertEqual(star_beer1.starred, True)
-
-        self.assertEqual(star_beer2.user, self.user)
-        self.assertEqual(star_beer2.beer, self.beer2)
-        self.assertEqual(star_beer2.starred, False)
-
-        self.assertEqual(star_beer3.user, self.user)
-        self.assertEqual(star_beer3.beer, self.beer3)
-        self.assertEqual(star_beer3.starred, True)
+        self.assertTrue(
+            models.StarBeer.objects.filter(
+                user=self.user, beer=self.beer1
+            ).exists()
+        )
+        self.assertFalse(
+            models.StarBeer.objects.filter(
+                user=self.user, beer=self.beer2
+            ).exists()
+        )
 
     def test_string_representation(self):
         ub = models.StarBeer.objects.create(user=self.user, beer=self.beer1)
@@ -222,7 +213,6 @@ class TestStarBeer(TestCase):
         kwargs = {
             "user": self.user,
             "beer": self.beer1,
-            "starred": False,
         }
 
         with self.assertRaises(IntegrityError):
