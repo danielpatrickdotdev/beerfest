@@ -49,8 +49,6 @@ class UserBeer(models.Model):
     beer = models.ForeignKey(Beer, on_delete=models.CASCADE,
                              related_name="userbeer")
     starred = models.BooleanField(default=True)
-    tried = models.BooleanField(default=False)
-    rating = models.PositiveSmallIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} and {self.beer.name}"

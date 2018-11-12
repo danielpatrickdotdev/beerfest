@@ -192,9 +192,9 @@ class TestUserBeer(TestCase):
     def test_create_and_retrieve_userbeer(self):
         models.UserBeer.objects.create(user=self.user, beer=self.beer1)
         models.UserBeer.objects.create(user=self.user, beer=self.beer2,
-                                       starred=False, tried=True, rating=5)
+                                       starred=False)
         models.UserBeer.objects.create(user=self.user, beer=self.beer3,
-                                       starred=True, tried=False, rating=None)
+                                       starred=True)
 
         user_beer1 = models.UserBeer.objects.get(id=1)
         user_beer2 = models.UserBeer.objects.get(id=2)
@@ -203,20 +203,14 @@ class TestUserBeer(TestCase):
         self.assertEqual(user_beer1.user, self.user)
         self.assertEqual(user_beer1.beer, self.beer1)
         self.assertEqual(user_beer1.starred, True)
-        self.assertEqual(user_beer1.tried, False)
-        self.assertEqual(user_beer1.rating, None)
 
         self.assertEqual(user_beer2.user, self.user)
         self.assertEqual(user_beer2.beer, self.beer2)
         self.assertEqual(user_beer2.starred, False)
-        self.assertEqual(user_beer2.tried, True)
-        self.assertEqual(user_beer2.rating, 5)
 
         self.assertEqual(user_beer3.user, self.user)
         self.assertEqual(user_beer3.beer, self.beer3)
         self.assertEqual(user_beer3.starred, True)
-        self.assertEqual(user_beer3.tried, False)
-        self.assertEqual(user_beer3.rating, None)
 
     def test_string_representation(self):
         ub = models.UserBeer.objects.create(user=self.user, beer=self.beer1)
@@ -229,8 +223,6 @@ class TestUserBeer(TestCase):
             "user": self.user,
             "beer": self.beer1,
             "starred": False,
-            "tried": True,
-            "rating": 4,
         }
 
         with self.assertRaises(IntegrityError):

@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
-from django.db.models import Q
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.views.generic import RedirectView, DetailView, ListView, View
@@ -30,9 +29,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         context_data = super().get_context_data(**kwargs)
 
         beer_list = Beer.objects.filter(
-            Q(userbeer__user=self.request.user, userbeer__starred=True) |
-            Q(userbeer__user=self.request.user, userbeer__tried=True) |
-            Q(userbeer__user=self.request.user, userbeer__rating__isnull=False)
+            userbeer__user=self.request.user, userbeer__starred=True
         ).distinct().select_related("bar", "brewery")
         context_data["beer_list"] = beer_list
 

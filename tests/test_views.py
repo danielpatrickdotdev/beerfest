@@ -37,18 +37,16 @@ class TestUserProfileView(BaseViewTest):
     def create_user_beers(self):
         bar = factories.create_bar()
         brewery = factories.create_brewery()
-        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Star PA")
-        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="Try IPA")
-        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Best")
-        factories.create_beer(bar=bar, brewery=brewery, name="Unpopular Swill")
+        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
+        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
+        beer3 = factories.create_beer(bar=bar, brewery=brewery, name="Bitter")
+        factories.create_beer(bar=bar, brewery=brewery, name="Stout")
 
         factories.create_user_beer(user=self.user, beer=beer1, starred=True)
-        factories.create_user_beer(user=self.user, beer=beer2, starred=False,
-                                   tried=True)
-        factories.create_user_beer(user=self.user, beer=beer3, starred=False,
-                                   rating=5)
+        factories.create_user_beer(user=self.user, beer=beer2, starred=True)
+        factories.create_user_beer(user=self.user, beer=beer3, starred=False)
 
-        return (beer1, beer2, beer3)
+        return (beer1, beer2)
 
     def test_get_context_data_adds_expected_beer_objects(self):
         expected_beers = self.create_user_beers()
@@ -321,9 +319,9 @@ class TestStarBeerView(BaseViewTest):
             bar=bar, brewery=brewery, name="Stout")
 
         factories.create_user_beer(user=self.user, beer=self.beer1,
-                                   starred=True, tried=True, rating=5)
+                                   starred=True)
         factories.create_user_beer(user=self.user, beer=self.beer2,
-                                   starred=False, tried=True, rating=2)
+                                   starred=False)
 
     def test_star_beer(self):
         request = self.factory.post("")
@@ -366,8 +364,6 @@ class TestStarBeerView(BaseViewTest):
         user_beer = UserBeer.objects.get(user=self.user, beer=self.beer1)
 
         self.assertTrue(user_beer.starred)
-        self.assertTrue(user_beer.tried)
-        self.assertEqual(user_beer.rating, 5)
         self.assertEqual(response.status_code, 204)
 
     def test_star_beer_using_test_client(self):
@@ -397,9 +393,9 @@ class TestUnstarBeerView(BaseViewTest):
             bar=bar, brewery=brewery, name="Stout")
 
         factories.create_user_beer(user=self.user, beer=self.beer1,
-                                   starred=True, tried=True, rating=5)
+                                   starred=True)
         factories.create_user_beer(user=self.user, beer=self.beer2,
-                                   starred=False, tried=True, rating=2)
+                                   starred=False)
 
     def test_unstar_beer(self):
         request = self.factory.post("")
@@ -442,8 +438,6 @@ class TestUnstarBeerView(BaseViewTest):
         user_beer = UserBeer.objects.get(user=self.user, beer=self.beer2)
 
         self.assertFalse(user_beer.starred)
-        self.assertTrue(user_beer.tried)
-        self.assertEqual(user_beer.rating, 2)
         self.assertEqual(response.status_code, 204)
 
     def test_unstar_beer_never_starred_creates_unstarred_userbeer_object(self):
@@ -455,8 +449,6 @@ class TestUnstarBeerView(BaseViewTest):
         user_beer = UserBeer.objects.get(user=self.user, beer=self.beer3)
 
         self.assertFalse(user_beer.starred)
-        self.assertFalse(user_beer.tried)
-        self.assertEqual(user_beer.rating, None)
         self.assertEqual(response.status_code, 204)
 
     def test_unstar_beer_using_test_client(self):
