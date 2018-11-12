@@ -56,40 +56,38 @@ class BeerDetailView(DetailView):
     model = Beer
 
 
-class StarBeerBaseView(LoginRequiredMixin, SingleObjectMixin, View):
+class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
     model = StarBeer
     http_method_names = ['post']
     raise_exception = True  # raise 403 for unauthenticated users
-    star_beer = None
 
     def get_object(self):
         return super().get_object(queryset=Beer.objects.all())
 
     def post(self, request, *args, **kwargs):
-        if self.star_beer is None:
-            raise ImproperlyConfigured(
-                f"{self.__class__.__name__} is missing a star_beer attribute"
-            )
         beer = self.get_object()
-        if self.star_beer:
-            self.object = self.model.objects.get_or_create(
-                user=self.request.user, beer=beer
-            )
-        else:
-            try:
-                obj = self.model.objects.get(
-                    user=self.request.user, beer=beer
-                )
-            except self.model.DoesNotExist:
-                pass
-            else:
-                obj.delete()
+        self.object = self.model.objects.get_or_create(
+            user=self.request.user, beer=beer
+        )
         return HttpResponse(status=204)
 
 
-class StarBeerView(StarBeerBaseView):
-    star_beer = True
+class UnstarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = StarBeer
+    http_method_names = ['post']
+    raise_exception = True  # raise 403 for unauthenticated users
 
+    def get_object(self):
+        return super().get_object(queryset=Beer.objects.all())
 
-class UnstarBeerView(StarBeerBaseView):
-    star_beer = False
+    def post(self, request, *args, **kwargs):
+        beer = self.get_object()
+        try:
+            obj = self.model.objects.get(
+                user=self.request.user, beer=beer
+            )
+        except self.model.DoesNotExist:
+            pass
+        else:
+            obj.delete()
+        return HttpResponse(status=204)

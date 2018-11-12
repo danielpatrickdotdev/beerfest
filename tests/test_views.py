@@ -440,21 +440,3 @@ class TestUnstarBeerView(BaseViewTest):
 
         self.assertFalse(qs.exists())
         self.assertEqual(response.status_code, 204)
-
-
-class TestStarBeerBaseView(TestCase):
-
-    def setUp(self):
-        self.factory = RequestFactory()
-
-    def test_missing_star_beer_attribute_results_in_error(self):
-        class ConcreteView(views.StarBeerBaseView):
-            pass
-
-        request = self.factory.post("")
-        view = ConcreteView()
-        view.request = request
-        expected_msg = "ConcreteView is missing a star_beer attribute"
-
-        with self.assertRaisesMessage(ImproperlyConfigured, expected_msg):
-            view.post(request)
