@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import ModelForm
 from django.http import HttpResponse
-from django.db.models.expressions import Exists, OuterRef
+from django.db.models.expressions import Exists, OuterRef, Subquery
 from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
@@ -33,6 +33,17 @@ class UserProfileView(LoginRequiredMixin, DetailView):
             starbeer__user=self.request.user
         ).distinct().select_related("bar", "brewery")
         context_data["starred_beers"] = starred_beers
+
+        rating = BeerRating.objects.filter(
+            user=self.request.user,
+            beer=OuterRef("pk")
+        )[:1].values("rating")
+
+        rated_beers = Beer.objects.filter(
+            beer_rating__user=self.request.user
+        ).distinct().select_related("bar", "brewery")
+        rated_beers = rated_beers.annotate(rating=Subquery(rating))
+        context_data["rated_beers"] = rated_beers
 
         return context_data
 

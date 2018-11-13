@@ -34,33 +34,46 @@ class TestIndexView(BaseViewTest):
 class TestUserProfileView(BaseViewTest):
     view_class = views.UserProfileView
 
-    def create_starred_beers(self):
+    def create_test_data(self):
         bar = factories.create_bar()
         brewery = factories.create_brewery()
-        beer1 = factories.create_beer(bar=bar, brewery=brewery, name="Mild")
-        beer2 = factories.create_beer(bar=bar, brewery=brewery, name="IPA")
-        factories.create_beer(bar=bar, brewery=brewery, name="Bitter")
-        factories.create_beer(bar=bar, brewery=brewery, name="Stout")
+        self.beer1 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Mild")
+        self.beer2 = factories.create_beer(
+            bar=bar, brewery=brewery, name="IPA")
+        self.beer3 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Bitter")
+        self.beer4 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Stout")
 
-        factories.star_beer(user=self.user, beer=beer1)
-        factories.star_beer(user=self.user, beer=beer2)
-
-        return (beer1, beer2)
+        factories.star_beer(user=self.user, beer=self.beer1)
+        factories.star_beer(user=self.user, beer=self.beer2)
+        factories.rate_beer(user=self.user,  beer=self.beer2, rating=2)
+        factories.rate_beer(user=self.user,  beer=self.beer3, rating=4)
 
     def test_get_context_data_adds_expected_beer_objects(self):
-        expected_beers = self.create_starred_beers()
+        self.create_test_data()
+        starred_beers = (self.beer1, self.beer2)
         request = self.factory.get("")
         request.user = self.user
         view = self.setup_view(request)
         view.object = None
 
         context_data = view.get_context_data()
+        rated_beers = context_data["rated_beers"]
 
         self.assertIn("starred_beers", context_data)
-        self.assertCountEqual(context_data["starred_beers"], expected_beers)
+        self.assertCountEqual(context_data["starred_beers"], starred_beers)
+
+        self.assertEqual(len(rated_beers), 2)
+        self.assertEqual(rated_beers[0].name, "IPA")
+        self.assertEqual(rated_beers[0].rating, 2)
+        self.assertEqual(rated_beers[1].name, "Bitter")
+        self.assertEqual(rated_beers[1].rating, 4)
 
     def test_starred_beers_context_variable_contains_expected_beers(self):
-        expected_beers = self.create_starred_beers()
+        self.create_test_data()
+        starred_beers = (self.beer1, self.beer2)
         request = self.factory.get("")
         request.user = self.user
         view = self.setup_view(request)
@@ -69,7 +82,14 @@ class TestUserProfileView(BaseViewTest):
 
         self.assertIn("starred_beers", response.context_data)
         self.assertCountEqual(
-            response.context_data["starred_beers"], expected_beers)
+            response.context_data["starred_beers"], starred_beers)
+
+        rated_beers = response.context_data["rated_beers"]
+        self.assertEqual(len(rated_beers), 2)
+        self.assertEqual(rated_beers[0].name, "IPA")
+        self.assertEqual(rated_beers[0].rating, 2)
+        self.assertEqual(rated_beers[1].name, "Bitter")
+        self.assertEqual(rated_beers[1].rating, 4)
 
     def test_user_object_variable_is_logged_in_user(self):
         request = self.factory.get("")
@@ -112,17 +132,24 @@ class TestUserProfileView(BaseViewTest):
 
     def test_renders_using_test_client(self):
         # Just a sanity check; almost an integration test
-        expected_beers = self.create_starred_beers()
+        self.create_test_data()
+        starred_beers = (self.beer1, self.beer2)
         self.client.force_login(self.user)
 
         response = self.client.get("/accounts/profile/")
         user = response.context["user"]
         beer_list = response.context["starred_beers"]
+        rated_beers = response.context_data["rated_beers"]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "beerfest/user_profile.html")
         self.assertEqual(user, self.user)
-        self.assertCountEqual(beer_list, expected_beers)
+        self.assertCountEqual(beer_list, starred_beers)
+        self.assertEqual(len(rated_beers), 2)
+        self.assertEqual(rated_beers[0].name, "IPA")
+        self.assertEqual(rated_beers[0].rating, 2)
+        self.assertEqual(rated_beers[1].name, "Bitter")
+        self.assertEqual(rated_beers[1].rating, 4)
 
 
 class TestBeerListView(BaseViewTest):
