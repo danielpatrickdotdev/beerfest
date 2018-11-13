@@ -1,7 +1,7 @@
 from django.contrib.admin import site as admin_site
 from django.test import TestCase
 
-from beerfest.models import Bar, Brewery, Beer, StarBeer
+from beerfest.models import Bar, Brewery, Beer, StarBeer, BeerRating
 
 
 class TestBeerfestAdmin(TestCase):
@@ -19,3 +19,6 @@ class TestBeerfestAdmin(TestCase):
 
     def test_starbeer_registered_with_admin(self):
         self.assertIn(StarBeer, self.registry)
+
+    def test_beerrating_registered_with_admin(self):
+        self.assertIn(BeerRating, self.registry)

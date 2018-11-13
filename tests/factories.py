@@ -59,3 +59,13 @@ def star_beer(user=None, beer=None):
         beer = create_beer()
 
     return models.StarBeer.objects.create(user=user, beer=beer)
+
+
+def rate_beer(user=None, beer=None, rating=3):
+    if user is None:
+        user = create_user()
+
+    if beer is None:
+        beer = create_beer()
+
+    return models.BeerRating.objects.create(user=user, beer=beer, rating=3)

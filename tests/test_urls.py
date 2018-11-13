@@ -43,3 +43,13 @@ class TestStarBeerURL(URLTestBase):
 
     def test_star_beer_route_reverse(self):
         self.assertEqual(reverse("beer-star", args=(1,)), "/beers/1/star/")
+
+
+class TestBeerRatingURL(URLTestBase):
+    def test_star_beer_route_uses_star_beer_view(self):
+        match = resolve("/beers/1/rating/")
+        self.assertEqual(match.func.__name__, "BeerRatingView")
+        self.assertEqual(match.kwargs, {"pk": 1})
+
+    def test_star_beer_route_reverse(self):
+        self.assertEqual(reverse("beer-rating", args=(1,)), "/beers/1/rating/")

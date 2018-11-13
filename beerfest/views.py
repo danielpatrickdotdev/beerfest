@@ -1,11 +1,14 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.forms import ModelForm
 from django.http import HttpResponse
 from django.db.models.expressions import Exists, OuterRef
 from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
-from .models import Beer, StarBeer
+from .models import Beer, StarBeer, BeerRating
 
 
 User = get_user_model()
@@ -81,3 +84,43 @@ class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
             user=self.request.user, beer=beer
         )
         return HttpResponse(status=204)
+
+
+class RatingForm(ModelForm):
+    class Meta:
+        model = BeerRating
+        fields = ["rating"]
+
+
+class BeerRatingView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = BeerRating
+    http_method_names = ['delete', 'put']
+    raise_exception = True  # raise 403 for unauthenticated users
+
+    def get_object(self):
+        return super().get_object(queryset=Beer.objects.all())
+
+    def delete(self, request, *args, **kwargs):
+        beer = self.get_object()
+        try:
+            obj = self.model.objects.get(
+                user=self.request.user, beer=beer
+            )
+        except self.model.DoesNotExist:
+            pass
+        else:
+            obj.delete()
+        return HttpResponse(status=204)
+
+    def put(self, request, *args, **kwargs):
+        beer = self.get_object()
+        body = json.loads(request.body)
+        form = RatingForm(body)
+
+        if form.is_valid():
+            self.model.objects.update_or_create(
+                user=request.user, beer=beer, defaults=form.cleaned_data)
+
+            return HttpResponse(status=204)
+        else:
+            return HttpResponse(status=400)

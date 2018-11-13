@@ -5,7 +5,7 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from beerfest import views
-from beerfest.models import StarBeer
+from beerfest.models import StarBeer, BeerRating
 from tests import factories
 
 
@@ -421,6 +421,145 @@ class TestStarBeerView(BaseViewTest):
 
         response = self.client.delete("/beers/1/star/")
         qs = StarBeer.objects.filter(user=self.user, beer=self.beer1)
+
+        self.assertFalse(qs.exists())
+        self.assertEqual(response.status_code, 204)
+
+
+class TestBeerRatingView(BaseViewTest):
+    view_class = views.BeerRatingView
+
+    def setUp(self):
+        super().setUp()
+        bar = factories.create_bar()
+        brewery = factories.create_brewery()
+
+        self.beer1 = factories.create_beer(
+            bar=bar, brewery=brewery, name="IPA")
+        self.beer2 = factories.create_beer(
+            bar=bar, brewery=brewery, name="Mild")
+
+        factories.rate_beer(user=self.user, beer=self.beer1, rating=3)
+
+    def test_rate_beer(self):
+        request = self.factory.put("", data={"rating": 1},
+                                   content_type="application/json")
+        request.user = self.user
+        view = self.setup_view(request, pk=2)
+
+        view.put(request)
+        beer_rating = BeerRating.objects.get(user=self.user, beer=self.beer2)
+
+        self.assertEqual(beer_rating.rating, 1)
+
+    def test_rate_beer_anonymous_forbidden(self):
+        request = self.factory.put("", data={"rating": 1},
+                                   content_type="application/json")
+        request.user = AnonymousUser()
+        view = self.setup_view(request, pk=2)
+
+        with self.assertRaises(PermissionDenied):
+            # Use view.dispatch as this is where logged in status is checked
+            view.dispatch(request)
+
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer2)
+
+        self.assertFalse(qs.exists())
+
+    def test_rate_beer_returns_204(self):
+        request = self.factory.put("", data={"rating": 1},
+                                   content_type="application/json")
+        request.user = self.user
+        view = self.setup_view(request, pk=2)
+
+        response = view.put(request)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_invalid_rating_returns_400(self):
+        request = self.factory.put("", data={"rating": 0},
+                                   content_type="application/json")
+        request.user = self.user
+        view = self.setup_view(request, pk=2)
+
+        response = view.put(request)
+        self.assertEqual(response.status_code, 400)
+
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer2)
+        self.assertFalse(qs.exists())
+
+    def test_rate_beer_already_rated_updates_rating(self):
+        request = self.factory.put("", data={"rating": 1},
+                                   content_type="application/json")
+        request.user = self.user
+        view = self.setup_view(request, pk=1)
+
+        response = view.put(request)
+        beer_rating = BeerRating.objects.get(user=self.user, beer=self.beer1)
+
+        self.assertEqual(beer_rating.rating, 1)
+        self.assertEqual(response.status_code, 204)
+
+    def test_rate_beer_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        self.client.force_login(self.user)
+
+        response = self.client.put("/beers/2/rating/", data={"rating": 1},
+                                   content_type="application/json")
+        self.assertEqual(response.status_code, 204)
+
+        beer_rating = BeerRating.objects.get(user=self.user, beer=self.beer2)
+        self.assertEqual(beer_rating.rating, 1)
+
+    def test_unrate_beer(self):
+        request = self.factory.delete("")
+        request.user = self.user
+        view = self.setup_view(request, pk=1)
+
+        view.delete(request)
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer1)
+
+        self.assertFalse(qs.exists())
+
+    def test_unrate_beer_anonymous_forbidden(self):
+        request = self.factory.delete("")
+        request.user = AnonymousUser()
+        view = self.setup_view(request, pk=1)
+
+        with self.assertRaises(PermissionDenied):
+            # Use view.dispatch as this is where logged in status is checked
+            view.dispatch(request)
+
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer1)
+
+        self.assertTrue(qs.exists())
+
+    def test_unrate_beer_returns_204(self):
+        request = self.factory.delete("")
+        request.user = self.user
+        view = self.setup_view(request, pk=1)
+
+        response = view.delete(request)
+
+        self.assertEqual(response.status_code, 204)
+
+    def test_unrate_beer_not_already_rated_has_no_effect(self):
+        request = self.factory.delete("")
+        request.user = self.user
+        view = self.setup_view(request, pk=2)
+
+        response = view.delete(request)
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer2)
+
+        self.assertFalse(qs.exists())
+        self.assertEqual(response.status_code, 204)
+
+    def test_unrate_beer_using_test_client(self):
+        # Just a sanity check; almost an integration test
+        self.client.force_login(self.user)
+
+        response = self.client.delete("/beers/1/rating/")
+        qs = BeerRating.objects.filter(user=self.user, beer=self.beer1)
 
         self.assertFalse(qs.exists())
         self.assertEqual(response.status_code, 204)
