@@ -68,6 +68,40 @@ class BeerListView(ListView):
 class BeerDetailView(DetailView):
     model = Beer
 
+    def get_context_data(self, **kwargs):
+        user = getattr(self.request, "user", None)
+        context_data = super().get_context_data(**kwargs)
+
+        num_stars = StarBeer.objects.filter(beer=self.object).count()
+        context_data["num_stars"] = num_stars
+
+        ratings = list(
+            BeerRating.objects.filter(
+                beer=self.object
+            ).values_list("rating", flat=True)
+        )
+        num_ratings = len(ratings)
+        if num_ratings > 0:
+            avg_rating = sum(ratings) / len(ratings)
+        else:
+            avg_rating = None
+        context_data["avg_rating"] = avg_rating
+
+        if user is not None and user.is_authenticated:
+            starred = StarBeer.objects.filter(
+                user=user, beer=self.object
+            ).exists()
+            context_data["starred"] = starred
+            try:
+                rating = BeerRating.objects.get(
+                    user=user, beer=self.object
+                ).rating
+            except BeerRating.DoesNotExist:
+                rating = None
+            context_data["rating"] = rating
+
+        return context_data
+
 
 class StarBeerView(LoginRequiredMixin, SingleObjectMixin, View):
     model = StarBeer

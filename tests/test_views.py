@@ -298,6 +298,90 @@ class TestBeerDetailView(BaseViewTest):
         self.assertEqual(context_object1, beer1)
         self.assertEqual(context_object2, beer2)
 
+    def test_get_context_data_returns_context_with_starred_status(self):
+        beer1, beer2 = self.create_beers()
+        factories.star_beer(user=self.user, beer=beer2)
+        request = self.factory.get("")
+        request.user = self.user
+
+        view = self.setup_view(request, pk=1)
+        view.object = beer1
+        context_data = view.get_context_data()
+
+        self.assertIn("starred", context_data)
+        self.assertFalse(context_data["starred"])
+
+        view = self.setup_view(request, pk=2)
+        view.object = beer2
+        context_data = view.get_context_data()
+
+        self.assertIn("starred", context_data)
+        self.assertTrue(context_data["starred"])
+
+    def test_get_context_data_returns_context_with_num_stars(self):
+        beer1, beer2 = self.create_beers()
+        user2 = factories.create_user("Test User 2")
+        factories.star_beer(user=self.user, beer=beer2)
+        factories.star_beer(user=user2, beer=beer2)
+        request = self.factory.get("")
+        request.user = self.user
+
+        view = self.setup_view(request, pk=1)
+        view.object = beer1
+        context_data = view.get_context_data()
+
+        self.assertIn("num_stars", context_data)
+        self.assertEqual(context_data["num_stars"], 0)
+
+        view = self.setup_view(request, pk=2)
+        view.object = beer2
+        context_data = view.get_context_data()
+
+        self.assertIn("num_stars", context_data)
+        self.assertEqual(context_data["num_stars"], 2)
+
+    def test_get_context_data_returns_context_with_user_rating(self):
+        beer1, beer2 = self.create_beers()
+        factories.rate_beer(user=self.user, beer=beer2, rating=5)
+        request = self.factory.get("")
+        request.user = self.user
+
+        view = self.setup_view(request, pk=1)
+        view.object = beer1
+        context_data = view.get_context_data()
+
+        self.assertIn("rating", context_data)
+        self.assertIsNone(context_data["rating"])
+
+        view = self.setup_view(request, pk=2)
+        view.object = beer2
+        context_data = view.get_context_data()
+
+        self.assertIn("rating", context_data)
+        self.assertEqual(context_data["rating"], 5)
+
+    def test_get_context_data_returns_context_with_avg_rating(self):
+        beer1, beer2 = self.create_beers()
+        user2 = factories.create_user("Test User 2")
+        factories.rate_beer(user=self.user, beer=beer2, rating=4)
+        factories.rate_beer(user=user2, beer=beer2, rating=1)
+        request = self.factory.get("")
+        request.user = self.user
+
+        view = self.setup_view(request, pk=1)
+        view.object = beer1
+        context_data = view.get_context_data()
+
+        self.assertIn("avg_rating", context_data)
+        self.assertIsNone(context_data["avg_rating"])
+
+        view = self.setup_view(request, pk=2)
+        view.object = beer2
+        context_data = view.get_context_data()
+
+        self.assertIn("avg_rating", context_data)
+        self.assertEqual(context_data["avg_rating"], 2.5)
+
     def test_get_object_and_get_with_invalid_id_raises_404(self):
         request = self.factory.get("")
         view = self.setup_view(request, pk=1)
