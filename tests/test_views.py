@@ -56,10 +56,10 @@ class TestUserProfileView(BaseViewTest):
 
         context_data = view.get_context_data()
 
-        self.assertIn("beer_list", context_data)
-        self.assertCountEqual(context_data["beer_list"], expected_beers)
+        self.assertIn("starred_beers", context_data)
+        self.assertCountEqual(context_data["starred_beers"], expected_beers)
 
-    def test_beer_list_context_variable_contains_expected_beers(self):
+    def test_starred_beers_context_variable_contains_expected_beers(self):
         expected_beers = self.create_starred_beers()
         request = self.factory.get("")
         request.user = self.user
@@ -67,9 +67,9 @@ class TestUserProfileView(BaseViewTest):
 
         response = view.get(request)
 
-        self.assertIn("beer_list", response.context_data)
+        self.assertIn("starred_beers", response.context_data)
         self.assertCountEqual(
-            response.context_data["beer_list"], expected_beers)
+            response.context_data["starred_beers"], expected_beers)
 
     def test_user_object_variable_is_logged_in_user(self):
         request = self.factory.get("")
@@ -117,7 +117,7 @@ class TestUserProfileView(BaseViewTest):
 
         response = self.client.get("/accounts/profile/")
         user = response.context["user"]
-        beer_list = response.context["beer_list"]
+        beer_list = response.context["starred_beers"]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "beerfest/user_profile.html")

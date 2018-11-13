@@ -29,10 +29,10 @@ class UserProfileView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        beer_list = Beer.objects.filter(
+        starred_beers = Beer.objects.filter(
             starbeer__user=self.request.user
         ).distinct().select_related("bar", "brewery")
-        context_data["beer_list"] = beer_list
+        context_data["starred_beers"] = starred_beers
 
         return context_data
 
