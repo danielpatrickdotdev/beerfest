@@ -68,4 +68,5 @@ def rate_beer(user=None, beer=None, rating=3):
     if beer is None:
         beer = create_beer()
 
-    return models.BeerRating.objects.create(user=user, beer=beer, rating=3)
+    return models.BeerRating.objects.create(user=user, beer=beer,
+                                            rating=rating)
