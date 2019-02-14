@@ -17,6 +17,22 @@ class TestIndexURL(URLTestBase):
         self.assertEqual(reverse("index"), "/")
 
 
+class TestBarURLs(URLTestBase):
+    def test_bar_list_route_uses_correct_view(self):
+        self.assertEqual(resolve("/bars/").func.__name__, "BarViewSet")
+
+    def test_bar_list_route_reverse(self):
+        self.assertEqual(reverse("bar-list"), "/bars/")
+
+    def test_bar_detail_route_uses_correct_view(self):
+        match = resolve("/bars/1/")
+        self.assertEqual(match.func.__name__, "BarViewSet")
+        self.assertEqual(match.kwargs, {"pk": "1"})
+
+    def test_bar_detail_route_reverse(self):
+        self.assertEqual(reverse("bar-detail", args=(1,)), "/bars/1/")
+
+
 class TestBeerListURL(URLTestBase):
     def test_beer_list_route_uses_beer_list_view(self):
         self.assertEqual(resolve("/beers/").func.__name__, "BeerListView")

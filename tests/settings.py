@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "beerfest",
+    "rest_framework",
 ]
 
 MIDDLEWARE = (

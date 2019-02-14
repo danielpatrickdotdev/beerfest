@@ -1,6 +1,11 @@
 from django.urls import path
 
+from rest_framework import routers
+
 import beerfest.views
+
+router = routers.SimpleRouter()
+router.register("bars", beerfest.views.BarViewSet)
 
 urlpatterns = [
     path('', beerfest.views.IndexView.as_view(), name='index'),
@@ -12,3 +17,5 @@ urlpatterns = [
     path('beers/<int:pk>/rating/',
          beerfest.views.BeerRatingView.as_view(), name='beer-rating'),
 ]
+
+urlpatterns += router.urls

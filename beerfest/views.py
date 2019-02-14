@@ -8,7 +8,11 @@ from django.db.models.expressions import Exists, OuterRef, Subquery
 from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
-from .models import Beer, StarBeer, BeerRating
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+from .models import Bar, Beer, StarBeer, BeerRating
+from .serializers import BarSerializer
 
 
 User = get_user_model()
@@ -46,6 +50,12 @@ class UserProfileView(LoginRequiredMixin, DetailView):
         context_data["rated_beers"] = rated_beers
 
         return context_data
+
+
+class BarViewSet(viewsets.ModelViewSet):
+    queryset = Bar.objects.all()
+    serializer_class = BarSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class BeerListView(ListView):
