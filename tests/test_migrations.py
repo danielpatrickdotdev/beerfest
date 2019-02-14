@@ -1,17 +1,14 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.core.exceptions import FieldDoesNotExist
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
 
-from tests import factories
 
-
-class TestMigration0005(TestCase):
-
-    migrate_from = [("beerfest", "0004_auto_20181026_0212")]
-    migrate_to = [("beerfest", "0005_alter_beer_abv")]
+class MigrationTestCase(TransactionTestCase):
+    migrate_to = None
+    migrate_from = None
 
     def migrate(self, migration):
         # Reverse to the original migration
@@ -20,6 +17,12 @@ class TestMigration0005(TestCase):
         executor.migrate(migration)
 
         return executor.loader.project_state(migration).apps
+
+
+class TestMigration0005(MigrationTestCase):
+
+    migrate_from = [("beerfest", "0004_auto_20181026_0212")]
+    migrate_to = [("beerfest", "0005_alter_beer_abv")]
 
     def create_beers(self, apps, abvs):
         Brewery = apps.get_model("beerfest", "Brewery")
@@ -65,11 +68,6 @@ class TestMigration0005(TestCase):
         for n in range(len(values_to_test)):
             self.assertEqual(beer_list[n].abv, values_to_test[n][1])
 
-    def test_beer_abv_field_changed(self):
-        beer = factories.create_beer(abv="5")
-        beer.refresh_from_db()
-        self.assertEqual(beer.abv, Decimal("5.0"))
-
     def test_reverse_migration(self):
         old_apps = self.migrate(self.migrate_to)
         values_to_test = (
@@ -90,18 +88,10 @@ class TestMigration0005(TestCase):
             self.assertEqual(beer_list[n].abv, values_to_test[n][1])
 
 
-class TestMigration0008(TestCase):
+class TestMigration0008(MigrationTestCase):
 
     migrate_from = [("beerfest", "0007_auto_20181112_0844")]
     migrate_to = [("beerfest", "0008_remove_starbeer_starred")]
-
-    def migrate(self, migration):
-        # Reverse to the original migration
-        executor = MigrationExecutor(connection)
-        executor.loader.build_graph()  # reload.
-        executor.migrate(migration)
-
-        return executor.loader.project_state(migration).apps
 
     def create_beers(self, apps, starred=1, unstarred=1):
         User = apps.get_model("auth", "User")
