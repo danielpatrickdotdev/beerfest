@@ -33,6 +33,24 @@ class TestBarURLs(URLTestBase):
         self.assertEqual(reverse("bar-detail", args=(1,)), "/bars/1/")
 
 
+class TestBreweryURLs(URLTestBase):
+    def test_brewery_list_route_uses_correct_view(self):
+        self.assertEqual(
+            resolve("/breweries/").func.__name__, "BreweryViewSet"
+        )
+
+    def test_brewery_list_route_reverse(self):
+        self.assertEqual(reverse("brewery-list"), "/breweries/")
+
+    def test_brewery_detail_route_uses_correct_view(self):
+        match = resolve("/breweries/1/")
+        self.assertEqual(match.func.__name__, "BreweryViewSet")
+        self.assertEqual(match.kwargs, {"pk": "1"})
+
+    def test_brewery_detail_route_reverse(self):
+        self.assertEqual(reverse("brewery-detail", args=(1,)), "/breweries/1/")
+
+
 class TestBeerListURL(URLTestBase):
     def test_beer_list_route_uses_beer_list_view(self):
         self.assertEqual(resolve("/beers/").func.__name__, "BeerListView")

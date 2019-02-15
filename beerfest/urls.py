@@ -6,6 +6,7 @@ import beerfest.views
 
 router = routers.SimpleRouter()
 router.register("bars", beerfest.views.BarViewSet)
+router.register("breweries", beerfest.views.BreweryViewSet)
 
 urlpatterns = [
     path('', beerfest.views.IndexView.as_view(), name='index'),

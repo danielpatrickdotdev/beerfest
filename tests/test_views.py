@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from beerfest import views
-from beerfest.models import Bar, StarBeer, BeerRating
+from beerfest.models import Bar, Brewery, StarBeer, BeerRating
 from tests import factories
 
 
@@ -260,6 +260,130 @@ class TestBarViewSet(APITestCase):
         bar = Bar.objects.get(id=1)
         self.assertEqual(bar.name, "Test Bar")
 
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+
+class TestBreweryViewSet(APITestCase):
+    def setUp(self):
+        self.user = factories.create_user()
+        self.admin = factories.create_user("Test")
+        perms = Permission.objects.filter(
+            content_type=ContentType.objects.get_for_model(Brewery)
+        )
+        self.admin.user_permissions.set(list(perms))
+        self.brewery1 = factories.create_brewery()
+        self.brewery2 = factories.create_brewery("Test Brew Ltd")
+
+    def test_GET_brewery(self):
+        response = self.client.get("/breweries/1/")
+
+        self.assertEqual(
+            response.data,
+            {"id": 1, "name": "Test Brew Co", "location": "Testville"}
+        )
+
+    def test_GET_brewery_list(self):
+        response = self.client.get("/breweries/")
+
+        self.assertEqual(
+            response.data, [
+                {"id": 1, "name": "Test Brew Co", "location": "Testville"},
+                {"id": 2, "name": "Test Brew Ltd", "location": "Testville"}
+            ],
+        )
+
+    def test_PATCH_brewery(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            "/breweries/1/", data={"name": "Test Brew Corp"}
+        )
+        self.brewery1.refresh_from_db()
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(self.brewery1.name, "Test Brew Corp")
+        self.assertEqual(self.brewery1.location, "Testville")
+
+    def test_PATCH_brewery_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/breweries/1/", data={"name": "Test Brew Corp"}
+        )
+        self.brewery1.refresh_from_db()
+
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(self.brewery1.name, "Test Brew Co")
+
+    def test_PATCH_brewery_anonymous(self):
+        response = self.client.patch(
+            "/breweries/1/", data={"name": "Test Brew Corp"}
+        )
+        self.brewery1.refresh_from_db()
+
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(self.brewery1.name, "Test Brew Co")
+
+    def test_POST_brewery(self):
+        self.client.force_authenticate(user=self.admin)
+        data = {
+            "name": "The Test Brewery",
+            "location": "Test Town",
+        }
+        response = self.client.post("/breweries/", data=data)
+        new_brewery = Brewery.objects.get(id=3)
+
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(new_brewery.name, "The Test Brewery")
+
+    def test_POST_brewery_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        data = {
+            "name": "The Test Brewery",
+            "location": "Test Town",
+        }
+        response = self.client.post("/breweries/", data=data)
+
+        with self.assertRaises(Brewery.DoesNotExist):
+            Brewery.objects.get(id=3)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_POST_brewery_anonymous(self):
+        data = {
+            "name": "The Test Brewery",
+            "location": "Test Town",
+        }
+        response = self.client.post("/breweries/", data=data)
+
+        with self.assertRaises(Brewery.DoesNotExist):
+            Brewery.objects.get(id=3)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_DELETE_brewery(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.delete(
+            "/breweries/1/"
+        )
+
+        with self.assertRaises(Brewery.DoesNotExist):
+            Brewery.objects.get(id=1)
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+
+    def test_DELETE_brewery_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(
+            "/breweries/1/"
+        )
+        brewery = Brewery.objects.get(id=1)
+
+        self.assertEqual(brewery.name, "Test Brew Co")
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_DELETE_brewery_anonymous(self):
+        response = self.client.delete(
+            "/breweries/1/"
+        )
+        brewery = Brewery.objects.get(id=1)
+
+        self.assertEqual(brewery.name, "Test Brew Co")
         self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
 
 
