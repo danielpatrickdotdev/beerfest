@@ -35,6 +35,15 @@ class Beer(models.Model):
     tasting_notes = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
+    starred_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="StarBeer", related_name="starred_beers"
+    )
+    rated_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="BeerRating", related_name="rated_beers"
+    )
+
     def __str__(self):
         return f"{self.name} by {self.brewery.name}"
 

@@ -177,6 +177,22 @@ class TestBeer(TestCase):
             "Test IPA 0",
         ])
 
+    def test_access_m2m_fields(self):
+        beer = factories.create_beer(bar=self.bar, brewery=self.brewery)
+        user = factories.create_user()
+        models.StarBeer.objects.create(beer=beer, user=user)
+        models.BeerRating.objects.create(
+            beer=beer, user=user, rating=5)
+
+        beer.refresh_from_db()
+        user.refresh_from_db()
+
+        self.assertCountEqual(beer.starred_by.all(), [user])
+        self.assertCountEqual(beer.rated_by.all(), [user])
+
+        self.assertCountEqual(user.starred_beers.all(), [beer])
+        self.assertCountEqual(user.rated_beers.all(), [beer])
+
 
 class TestStarBeer(TestCase):
     def setUp(self):
