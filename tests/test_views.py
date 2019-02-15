@@ -1,4 +1,5 @@
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.test import TestCase, RequestFactory
@@ -158,6 +159,11 @@ class TestUserProfileView(BaseViewTest):
 class TestBarViewSet(APITestCase):
     def setUp(self):
         self.user = factories.create_user()
+        self.admin = factories.create_user("Test")
+        perms = Permission.objects.filter(
+            content_type=ContentType.objects.get_for_model(Bar)
+        )
+        self.admin.user_permissions.set(list(perms))
         self.bar1 = factories.create_bar()
         self.bar2 = factories.create_bar("Test Bar 2")
 
@@ -173,7 +179,7 @@ class TestBarViewSet(APITestCase):
         )
 
     def test_PATCH_bar(self):
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin)
         response = self.client.patch(
             "/bars/1/", data={"name": "Testing Bar"}
         )
@@ -182,6 +188,15 @@ class TestBarViewSet(APITestCase):
         self.assertEqual(self.bar1.name, "Testing Bar")
 
     def test_PATCH_bar_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/bars/1/", data={"name": "Testing Bar"}
+        )
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.bar1.refresh_from_db()
+        self.assertEqual(self.bar1.name, "Test Bar")
+
+    def test_PATCH_bar_anonymous(self):
         response = self.client.patch(
             "/bars/1/", data={"name": "Testing Bar"}
         )
@@ -190,7 +205,7 @@ class TestBarViewSet(APITestCase):
         self.assertEqual(self.bar1.name, "Test Bar")
 
     def test_POST_bar(self):
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin)
         response = self.client.post(
             "/bars/", data={"name": "The Test Bar"}
         )
@@ -200,6 +215,16 @@ class TestBarViewSet(APITestCase):
         self.assertEqual(new_bar.name, "The Test Bar")
 
     def test_POST_bar_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/bars/", data={"name": "The Test Bar"}
+        )
+        with self.assertRaises(Bar.DoesNotExist):
+            Bar.objects.get(id=3)
+
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_POST_bar_anonymous(self):
         response = self.client.post(
             "/bars/", data={"name": "The Test Bar"}
         )
@@ -209,7 +234,7 @@ class TestBarViewSet(APITestCase):
         self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
 
     def test_DELETE_bar(self):
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin)
         response = self.client.delete(
             "/bars/1/"
         )
@@ -219,6 +244,16 @@ class TestBarViewSet(APITestCase):
         self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
 
     def test_DELETE_bar_unauthorised(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(
+            "/bars/1/"
+        )
+        bar = Bar.objects.get(id=1)
+        self.assertEqual(bar.name, "Test Bar")
+
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_DELETE_bar_anonymous(self):
         response = self.client.delete(
             "/bars/1/"
         )

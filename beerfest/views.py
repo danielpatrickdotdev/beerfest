@@ -9,7 +9,7 @@ from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
 
 from .models import Bar, Beer, StarBeer, BeerRating
 from .serializers import BarSerializer
@@ -55,7 +55,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
 class BarViewSet(viewsets.ModelViewSet):
     queryset = Bar.objects.all()
     serializer_class = BarSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
 
 class BeerListView(ListView):
