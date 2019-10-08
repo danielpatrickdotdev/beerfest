@@ -9,10 +9,13 @@ from django.views.generic import RedirectView, DetailView, ListView, View
 from django.views.generic.detail import SingleObjectMixin
 
 from rest_framework import viewsets
-from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.permissions import (
+    DjangoModelPermissionsOrAnonReadOnly, IsAuthenticated
+)
 
 from .models import Bar, Brewery, Beer, StarBeer, BeerRating
-from .serializers import BarSerializer, BrewerySerializer
+from .serializers import BarSerializer, BrewerySerializer, UserSerializer
 
 
 User = get_user_model()
@@ -20,6 +23,14 @@ User = get_user_model()
 
 class IndexView(RedirectView):
     pattern_name = "beer-list"
+
+
+class NewUserProfileView(LoginRequiredMixin, RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
 
 
 class UserProfileView(LoginRequiredMixin, DetailView):
