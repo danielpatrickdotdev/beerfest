@@ -10,7 +10,7 @@ htmlcov/
 coverage.xml
 
 # Environments
-venv/
+.venv/
 
 # Rope project settings
 .ropeproject
