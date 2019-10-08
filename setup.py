@@ -15,6 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "django>=2.1",
+        "djangorestframework>=3.10",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
