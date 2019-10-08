@@ -4,11 +4,16 @@ from beerfest import models
 
 
 def create_user(username="Mx Test"):
-    return User.objects.get_or_create(username=username, email="test@example.com")[0]
+    user, _ = User.objects.get_or_create(
+        username=username, email="test@example.com"
+    )
+    return user
 
 
 def create_brewery(name="Test Brew Co", location="Testville", nbeers=0):
-    brewery, _  = models.Brewery.objects.get_or_create(name=name, location=location)
+    brewery, _ = models.Brewery.objects.get_or_create(
+        name=name, location=location
+    )
 
     if nbeers > 0:
         bar = create_bar()
