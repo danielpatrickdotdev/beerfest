@@ -31,9 +31,29 @@ def user_starred_beer(user_id, beer_id):
 
 @register.inclusion_tag("beerfest/beer_list_table.html")
 def display_beer_table(beer_list, user):
-    return {"beer_list": beer_list, "user": user, "show_stars": False}
+    return {
+        "beer_list": beer_list,
+        "user": user,
+        "show_stars": False,
+        "show_ratings": False,
+    }
 
 
 @register.inclusion_tag("beerfest/beer_list_table.html")
 def display_beer_table_with_stars(beer_list, user):
-    return {"beer_list": beer_list, "user": user, "show_stars": True}
+    return {
+        "beer_list": beer_list,
+        "user": user,
+        "show_stars": True,
+        "show_ratings": False,
+    }
+
+
+@register.inclusion_tag("beerfest/beer_list_table.html")
+def display_beer_table_with_stars_and_ratings(beer_list, user):
+    return {
+        "beer_list": beer_list,
+        "user": user,
+        "show_stars": True,
+        "show_ratings": True,
+    }
