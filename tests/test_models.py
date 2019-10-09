@@ -68,10 +68,10 @@ class TestBar(TestCase):
 
         bar_names = models.Bar.objects.values_list("name", flat=True)
         self.assertEqual(list(bar_names), [
-            "Test Bar 0",
-            "Test Bar 1",
             "Test Bar 3",
+            "Test Bar 1",
             "Test Bar 5",
+            "Test Bar 0",
         ])
 
 

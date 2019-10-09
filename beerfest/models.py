@@ -21,7 +21,7 @@ class Bar(models.Model):
         return self.name
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["id"]
 
 
 class Beer(models.Model):
