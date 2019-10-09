@@ -164,30 +164,31 @@ class TestBeer(TestCase):
             beer.full_clean()
 
     def test_default_ordering(self):
+        bar2 = factories.create_bar(name="Test Bar 2")
         factories.create_beer(
-            bar=factories.create_bar(name="Test Bar 2"),
+            bar=self.bar,
             brewery=self.brewery,
             name="Test IPA",
             number=1,
         )
         factories.create_beer(
-            bar=self.bar,
+            bar=bar2,
             brewery=self.brewery,
             name="Test IPA 3",
         )
         factories.create_beer(
-            bar=self.bar,
+            bar=bar2,
             brewery=self.brewery,
             name="Test IPA 2",
         )
         factories.create_beer(
-            bar=self.bar,
+            bar=bar2,
             brewery=self.brewery,
             name="Test IPA 5",
             number=2,
         )
         factories.create_beer(
-            bar=self.bar,
+            bar=bar2,
             brewery=factories.create_brewery(name="Test Brew"),
             name="Test IPA 4",
             number=3,
@@ -195,11 +196,11 @@ class TestBeer(TestCase):
 
         beer_names = models.Beer.objects.values_list("name", flat=True)
         self.assertEqual(list(beer_names), [
+            "Test IPA",
             "Test IPA 4",
             "Test IPA 5",
             "Test IPA 2",
             "Test IPA 3",
-            "Test IPA",
         ])
 
     def test_access_m2m_fields(self):

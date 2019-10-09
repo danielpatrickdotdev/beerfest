@@ -49,7 +49,7 @@ class Beer(models.Model):
 
     class Meta:
         ordering = [
-            "bar__name",
+            "bar",
             "brewery__name",
             models.F("number").asc(nulls_last=True),
             "name",
