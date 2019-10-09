@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
             model_name='beer',
             name='abv',
             field=models.DecimalField(
-                blank=True, decimal_places=1, max_digits=4, null=True
+                blank=True, decimal_places=1, max_digits=5, null=True
             ),
         ),
         migrations.RunPython(forwards_func, reverse_func),
