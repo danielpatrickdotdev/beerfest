@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
     name="beerfest",
-    version="0.0.1a4",
+    version="0.0.1a5",
     author="Daniel Patrick",
     author_email="danieljudepatrick@gmail.com",
     description="Django app for beer festival data",
