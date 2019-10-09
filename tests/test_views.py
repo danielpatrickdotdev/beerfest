@@ -69,13 +69,10 @@ class TestUserProfileView(BaseViewTest):
         self.assertIn("starred_beers", context_data)
         self.assertCountEqual(context_data["starred_beers"], starred_beers)
 
-        self.assertEqual(len(rated_beers), 2)
-        self.assertEqual(rated_beers[0].name, "IPA")
-        self.assertEqual(rated_beers[0].rating, 2)
-        self.assertEqual(rated_beers[1].name, "Bitter")
-        self.assertEqual(rated_beers[1].rating, 4)
+        rated_list = list(rated_beers.values_list("name", "rating"))
+        self.assertCountEqual(rated_list, [("IPA", 2), ("Bitter", 4)])
 
-    def test_starred_beers_context_variable_contains_expected_beers(self):
+    def test_response_context_data_contains_expected_beers_after(self):
         self.create_test_data()
         starred_beers = (self.beer1, self.beer2)
         request = self.factory.get("")
@@ -89,11 +86,8 @@ class TestUserProfileView(BaseViewTest):
             response.context_data["starred_beers"], starred_beers)
 
         rated_beers = response.context_data["rated_beers"]
-        self.assertEqual(len(rated_beers), 2)
-        self.assertEqual(rated_beers[0].name, "IPA")
-        self.assertEqual(rated_beers[0].rating, 2)
-        self.assertEqual(rated_beers[1].name, "Bitter")
-        self.assertEqual(rated_beers[1].rating, 4)
+        rated_list = list(rated_beers.values_list("name", "rating"))
+        self.assertCountEqual(rated_list, [("IPA", 2), ("Bitter", 4)])
 
     def test_user_object_variable_is_logged_in_user(self):
         request = self.factory.get("")
@@ -149,11 +143,9 @@ class TestUserProfileView(BaseViewTest):
         self.assertTemplateUsed(response, "beerfest/user_profile.html")
         self.assertEqual(user, self.user)
         self.assertCountEqual(beer_list, starred_beers)
-        self.assertEqual(len(rated_beers), 2)
-        self.assertEqual(rated_beers[0].name, "IPA")
-        self.assertEqual(rated_beers[0].rating, 2)
-        self.assertEqual(rated_beers[1].name, "Bitter")
-        self.assertEqual(rated_beers[1].rating, 4)
+
+        rated_list = list(rated_beers.values_list("name", "rating"))
+        self.assertCountEqual(rated_list, [("IPA", 2), ("Bitter", 4)])
 
 
 class TestBarViewSet(APITestCase):

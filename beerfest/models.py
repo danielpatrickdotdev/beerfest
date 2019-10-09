@@ -11,7 +11,7 @@ class Brewery(models.Model):
         return self.name
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["name"]
 
 
 class Bar(models.Model):
@@ -21,7 +21,7 @@ class Bar(models.Model):
         return self.name
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["name"]
 
 
 class Beer(models.Model):
@@ -48,7 +48,12 @@ class Beer(models.Model):
         return f"{self.name} by {self.brewery.name}"
 
     class Meta:
-        ordering = ["id"]
+        ordering = [
+            "bar__name",
+            "brewery__name",
+            models.F("number").asc(nulls_last=True),
+            "name",
+        ]
         unique_together = ["brewery", "name"]
 
 

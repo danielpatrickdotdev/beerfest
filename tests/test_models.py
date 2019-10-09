@@ -39,10 +39,10 @@ class TestBrewery(TestCase):
 
         brewery_names = models.Brewery.objects.values_list("name", flat=True)
         self.assertEqual(list(brewery_names), [
-            "Test Brew Co 3",
-            "Test Brew Co 1",
-            "Test Brew Co 5",
             "Test Brew Co 0",
+            "Test Brew Co 1",
+            "Test Brew Co 3",
+            "Test Brew Co 5",
         ])
 
 
@@ -68,10 +68,10 @@ class TestBar(TestCase):
 
         bar_names = models.Bar.objects.values_list("name", flat=True)
         self.assertEqual(list(bar_names), [
-            "Test Bar 3",
-            "Test Bar 1",
-            "Test Bar 5",
             "Test Bar 0",
+            "Test Bar 1",
+            "Test Bar 3",
+            "Test Bar 5",
         ])
 
 
@@ -164,17 +164,42 @@ class TestBeer(TestCase):
             beer.full_clean()
 
     def test_default_ordering(self):
-        for n in [3, 1, 5, 0]:
-            models.Beer.objects.create(
-                bar=self.bar, brewery=self.brewery, name=f"Test IPA {n}"
-            )
+        factories.create_beer(
+            bar=factories.create_bar(name="Test Bar 2"),
+            brewery=self.brewery,
+            name="Test IPA",
+            number=1,
+        )
+        factories.create_beer(
+            bar=self.bar,
+            brewery=self.brewery,
+            name="Test IPA 3",
+        )
+        factories.create_beer(
+            bar=self.bar,
+            brewery=self.brewery,
+            name="Test IPA 2",
+        )
+        factories.create_beer(
+            bar=self.bar,
+            brewery=self.brewery,
+            name="Test IPA 5",
+            number=2,
+        )
+        factories.create_beer(
+            bar=self.bar,
+            brewery=factories.create_brewery(name="Test Brew"),
+            name="Test IPA 4",
+            number=3,
+        )
 
         beer_names = models.Beer.objects.values_list("name", flat=True)
         self.assertEqual(list(beer_names), [
-            "Test IPA 3",
-            "Test IPA 1",
+            "Test IPA 4",
             "Test IPA 5",
-            "Test IPA 0",
+            "Test IPA 2",
+            "Test IPA 3",
+            "Test IPA",
         ])
 
     def test_access_m2m_fields(self):
