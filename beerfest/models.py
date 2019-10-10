@@ -54,7 +54,7 @@ class Beer(models.Model):
             models.F("number").asc(nulls_last=True),
             "name",
         ]
-        unique_together = ["brewery", "name"]
+        unique_together = ["brewery", "name", "bar", "number"]
 
 
 class StarBeer(models.Model):
