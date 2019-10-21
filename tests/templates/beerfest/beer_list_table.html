@@ -1,1 +1,1 @@
-{% for beer in beer_list %}{{ beer.id }} {{ beer.name }} {{ beer.starred }} | {% endfor %}{{ user.username }} | {{ show_stars }}
+{% for beer in beer_list %}{{ beer.id }} {{ beer.name }} {{ beer.starred }} {{ beer.rating|default:"N/A" }} | {% endfor %}{{ user.username }} | {{ show_stars }} | {{ show_ratings }}

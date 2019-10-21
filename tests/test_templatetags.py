@@ -1,12 +1,12 @@
 from decimal import Decimal
 
-from django.db.models.expressions import Exists, OuterRef
+from django.db.models.expressions import Exists, OuterRef, Subquery
 from django.template import Context, Template
 from django.test import TestCase, RequestFactory
 
 from tests import factories
 
-from beerfest.models import Beer, StarBeer
+from beerfest.models import Beer, StarBeer, BeerRating
 from beerfest.templatetags import beer_tags
 
 
@@ -27,8 +27,8 @@ class UserBeerTemplateTagBaseTest(TemplateTagBaseTest):
     def setUp(self):
         super().setUp()
         self.user = factories.create_user()
-        factories.star_beer(
-            user=self.user, beer=self.beer1)
+        factories.star_beer(user=self.user, beer=self.beer1)
+        factories.rate_beer(user=self.user, beer=self.beer1, rating=3)
 
 
 class NullableNumberFilterTest(TestCase):
@@ -140,9 +140,10 @@ class DisplayBeerTableTemplateTagTest(UserBeerTemplateTagBaseTest):
         )
         beer_list = beer_list.annotate(starred=Exists(star_beer))
         expected = (
-            "1 Star PA True | "
-            "2 Try IPA False | "
+            "1 Star PA True N/A | "
+            "2 Try IPA False N/A | "
             "Mx Test | "
+            "False | "
             "False\n"
         )
 
@@ -163,15 +164,51 @@ class DisplayBeerTableWithStarsTemplateTagTest(UserBeerTemplateTagBaseTest):
         )
         beer_list = beer_list.annotate(starred=Exists(star_beer))
         expected = (
-            "1 Star PA True | "
-            "2 Try IPA False | "
+            "1 Star PA True N/A | "
+            "2 Try IPA False N/A | "
             "Mx Test | "
-            "True\n"
+            "True | "
+            "False\n"
         )
 
         rendered = Template(
             "{% load beer_tags %}"
             "{% display_beer_table_with_stars beer_list user %}"
+        ).render(Context({"beer_list": beer_list, "user": self.user}))
+
+        self.assertEqual(rendered, expected)
+
+
+class DisplayBeerTableWithStarsAndRatingsTemplateTagTest(
+    UserBeerTemplateTagBaseTest
+):
+    def test_renders_expected_table(self):
+        beer_list = Beer.objects.all()
+        star_beer = StarBeer.objects.filter(
+            user=self.user.pk,
+            beer=OuterRef("pk")
+        )
+        rate_beer = BeerRating.objects.filter(
+            user=self.user.pk,
+            beer=OuterRef("pk")
+        )
+        beer_list = beer_list.annotate(
+            starred=Exists(star_beer),
+            rating=Subquery(
+                rate_beer.values('rating')
+            )
+        )
+        expected = (
+            "1 Star PA True 3 | "
+            "2 Try IPA False N/A | "
+            "Mx Test | "
+            "True | "
+            "True\n"
+        )
+
+        rendered = Template(
+            "{% load beer_tags %}"
+            "{% display_beer_table_with_stars_and_ratings beer_list user %}"
         ).render(Context({"beer_list": beer_list, "user": self.user}))
 
         self.assertEqual(rendered, expected)
