@@ -127,13 +127,13 @@ class TestBeer(TestCase):
         self.assertEqual(str(beer), "Test IPA by Test Brew Co")
         self.assertEqual(str(another_beer), "Test Mild by Test Brew Co")
 
-    def test_beer_name_must_be_unique_with_brewery(self):
-        models.Beer.objects.create(**self.beer_kwargs)
+    def test_beer_name_must_be_unique_with_brewery_bar_and_number(self):
+        models.Beer.objects.create(number=1, **self.beer_kwargs)
 
         kwargs = self.beer_kwargs.copy()
-        kwargs["bar"] = models.Bar.objects.create(name="Test Bar 2")
         kwargs["reserved"] = False
         kwargs["abv"] = "5.5"
+        kwargs["number"] = 1
 
         with self.assertRaises(IntegrityError):
             models.Beer.objects.create(**kwargs)
